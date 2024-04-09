@@ -2,6 +2,9 @@ FROM ubuntu:noble
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y git kmod mkosi dpkg-dev devscripts systemd-ukify systemd-boot cpio mtools && apt clean && rm -rf /var/lib/apt/lists
 
+# for building rocky images, on ubuntu, lol
+RUN apt-get update && apt-get install -y xfsprogs && apt clean && rm -rf /var/lib/apt/lists
+
 WORKDIR /cache/packages
 WORKDIR /out
 WORKDIR /work

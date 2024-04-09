@@ -102,6 +102,8 @@ mkdir -p "${WORK_DIR}"
 
 # For now just copy the sources...
 cp -r -v "${FLAVOR_DIR}"/* "${WORK_DIR}"/
+# ... and ensure any *.postinst files, if any, are executable
+find "${WORK_DIR}" -name "*.postinst" -exec chmod +x {} \;
 
 # Prepare arrays with arguments for mkosi and docker invocation
 declare -a mkosi_opts=()
