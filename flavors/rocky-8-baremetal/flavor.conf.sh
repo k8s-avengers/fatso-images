@@ -3,4 +3,4 @@
 # Config file for flavor
 
 declare -g -r BUILDER="ubuntu"
-declare -g -r BUILDER_CACHE_PKGS_ID="rocky-9"
+declare -g -r BUILDER_CACHE_PKGS_ID="rocky-8"
