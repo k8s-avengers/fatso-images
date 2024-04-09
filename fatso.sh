@@ -4,6 +4,8 @@ set -e
 
 source lib/common.sh
 
+check_docker_daemon_for_sanity
+
 declare -g -r FLAVOR="${1:-"ubuntu-noble-baremetal"}"
 declare -g -r FLAVOR_DIR="flavors/${FLAVOR}"
 declare -g -r FLAVOR_CONF="${FLAVOR_DIR}/flavor.conf.sh"
@@ -39,8 +41,25 @@ source "${BUILDER_CONF}"
 [[ -z "${BUILDER_DESCRIPTION}" ]] && log error "BUILDER_DESCRIPTION is not set" && exit 1
 log info "BUILDER_DESCRIPTION=${BUILDER_DESCRIPTION}"
 
+####################################################################################################################################################################################
 
+# Let's hash the builder's Dockerfile plus a few variables
+declare -g BUILDER_HASH=""
+BUILDER_HASH="$(cat "${BUILDER_DIR}/Dockerfile" "${BUILDER_CONF}" | sha256sum - | cut -d ' ' -f 1)"
+declare -g -r BUILDER_HASH="${BUILDER_HASH:0:8}" # shorten it to 8 characters, make readonly
+log info "BUILDER_HASH=${BUILDER_HASH}"
 
+declare -g -r BUILDER_IMAGE_REF="fatso-builder-${BUILDER}:${BUILDER_HASH}"
 
-
-
+# Check if Docker local store has this image name BUILDER_IMAGE_REF, if not, build it.
+# If the image is in the local docker cache, skip building
+if [[ -n "$(docker images -q "${BUILDER_IMAGE_REF}")" ]]; then
+	log info "Builder image '${BUILDER_IMAGE_REF}' already present, skip building."
+else
+	log warn "Builder image ${BUILDER_IMAGE_REF} not found, building..."
+	(
+		cd "${BUILDER_DIR}" || { log error "crazy about ${BUILDER_DIR}" && exit 1; }
+		docker buildx build --progress=plain --load -t "${BUILDER_IMAGE_REF}" .
+	)
+	log info "Build done for ${BUILDER_IMAGE_REF}"
+fi

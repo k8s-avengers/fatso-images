@@ -6,7 +6,7 @@ RUN apt-get install -y
 WORKDIR /out
 WORKDIR /src
 
-RUN mkosi version
+RUN mkosi --version
 
 VOLUME /out
 VOLUME /src
