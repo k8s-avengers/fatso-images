@@ -75,20 +75,6 @@ fi
 
 ####################################################################################################################################################################################
 
-# Prepare output dir (mkosi's output dir)
-declare -g -r OUTPUT_DIR="out/flavors/${FLAVOR}"
-rm -rf "${OUTPUT_DIR}"
-mkdir -p "${OUTPUT_DIR}"
-
-declare -g -r OUTPUT_IMAGE_FILE_RAW="${OUTPUT_DIR}/image.raw"
-log info "Expecting output image at ${OUTPUT_IMAGE_FILE_RAW}"
-
-# Prepare dist dist (final output dir)
-declare -g -r DIST_DIR="dist"
-mkdir -p "${DIST_DIR}"
-declare -g -r DIST_FILE_IMG_RAW_GZ="${DIST_DIR}/${FLAVOR}.img.gz"
-log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
-
 # Prepare cache dirs
 declare -g -r CACHE_DIR_PKGS="cache/pkgs/${BUILDER_CACHE_PKGS_ID}"
 declare -g -r CACHE_DIR_INCREMENTAL="cache/incremental/${FLAVOR}" # @TODO needs a hash etc
@@ -106,6 +92,40 @@ mkdir -p "${WORK_DIR}"
 cp -r -v "${FLAVOR_DIR}"/* "${WORK_DIR}"/
 # ... and ensure any *.postinst files, if any, are executable
 find "${WORK_DIR}" -name "*.postinst" -exec chmod +x {} \;
+
+####################################################################################################################################################################################
+# Version calc, for GHA's benefit
+
+declare -g -r IMAGE_VERSION="${IMAGE_VERSION:-"666"}"
+
+declare CURRENT_DATE_VERSION # yyyymmddhhmm (UTC) - year month day hour minute
+CURRENT_DATE_VERSION=$(date -u "+%Y%m%d%H%M")
+declare FULL_VERSION="${CURRENT_DATE_VERSION}-${IMAGE_VERSION}"
+
+# Set GH output with the full version, if it's a file
+if [[ -n "${GITHUB_OUTPUT}" ]]; then
+	log info "Setting FULL_VERSION=${FULL_VERSION} in GITHUB_OUTPUT=${GITHUB_OUTPUT}"
+	echo "FULL_VERSION=${FULL_VERSION}" >> "${GITHUB_OUTPUT}"
+else
+	log debug "GITHUB_OUTPUT is not set, not setting FULL_VERSION=${FULL_VERSION}"
+fi
+
+# Prepare output dir (mkosi's output dir)
+declare -g -r OUTPUT_DIR="out/flavors/${FLAVOR}"
+rm -rf "${OUTPUT_DIR}"
+mkdir -p "${OUTPUT_DIR}"
+
+declare -g -r OUTPUT_IMAGE_FILE_RAW="${OUTPUT_DIR}/image.raw"
+log info "Expecting output image at ${OUTPUT_IMAGE_FILE_RAW}"
+
+# Prepare dist dist (final output dir)
+declare -g -r DIST_DIR="dist"
+mkdir -p "${DIST_DIR}"
+declare -g -r DIST_FILE_IMG_RAW_GZ="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.img.gz"
+log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
+
+####################################################################################################################################################################################
+# Actually build
 
 # Prepare arrays with arguments for mkosi and docker invocation
 declare -a mkosi_opts=()
@@ -129,6 +149,7 @@ docker "${docker_opts[@]}"
 
 log info "Done building mkosi! ${FLAVOR}"
 
+####################################################################################################################################################################################
 # Compress the image from OUTPUT_IMAGE_FILE_RAW to DIST_FILE_IMG_RAW_GZ, using pigz
 declare -i size_orig size_compress
 size_orig=$(stat -c %s "${OUTPUT_IMAGE_FILE_RAW}")

@@ -1,0 +1,58 @@
+name: matrix
+on:
+  #schedule: [ cron: '0 5 * * *' ] # every day at 5am UTC
+  workflow_dispatch:
+
+jobs:
+  build:
+    env:
+      BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      IMAGE_VERSION: "1000"
+    permissions:
+      packages: write # to write to ghcr.io
+      contents: write # to commit to the repo
+    runs-on: "ubuntu-latest"
+    strategy:
+      fail-fast: false # let other jobs try to complete if one fails
+      matrix:
+        include:
+          - { id: "ubuntu-noble-baremetal", env: { FLAVOR: "ubuntu-noble-baremetal" } }
+          - { id: "rocky-8-baremetal", env: { FLAVOR: "rocky-8-baremetal" } }
+    name: "${{ matrix.id }}"
+    steps:
+      - name: cleanup GHA hosted runner
+        run: |
+          # Workaround to provide additional free space for building.
+          #   https://github.com/actions/virtual-environments/issues/2840
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Checkout build repo
+        uses: actions/checkout@v4
+
+      - name: Docker Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }} # GitHub username or org
+          password: ${{ secrets.GITHUB_TOKEN }}    # GitHub actions builtin token. repo has to have pkg access.
+
+      - name: Actually process ${{matrix.id}}
+        id: buildimage
+        env: ${{ matrix.env }} # this gets combined with the job-wide env's like BASE_OCI_REF
+        run: |
+          bash fatso.sh "${{ matrix.id }}"
+
+      # Release the artifacts into GitHub Releases for easy downloading
+      - name: "GH Release ${{matrix.id}} for version ${{ steps.buildimage.outputs.FULL_VERSION }}"
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "${{matrix.id}}"
+          prerelease: false
+          title: "${{ steps.buildimage.outputs.FULL_VERSION }} for ${{matrix.id}}"
+          files: |
+            dist/*
