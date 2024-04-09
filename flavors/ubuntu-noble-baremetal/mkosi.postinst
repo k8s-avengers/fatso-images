@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -e
+set -x
+
+# don't ask me any questions, apt
+export DEBIAN_FRONTEND=noninteractive
+
+ls -la /etc/resolv.conf || true
+cat /etc/resolv.conf || true
+
+# ---------------------------- install updates ---------------------------------
+echo -e "\n\nInstalling updates...\n"
+
+# add package repository for updates to sources list
+# add-apt-repository "deb http://archive.ubuntu.com/ubuntu focal-updates main universe"
+
+# update package lists
+apt-get -y update
+
+# install updates
+apt-get -y upgrade
+
+
+apt-get autoremove --purge
