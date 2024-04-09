@@ -91,8 +91,10 @@ log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
 
 # Prepare cache dirs
 declare -g -r CACHE_DIR_PKGS="cache/pkgs/${BUILDER_CACHE_PKGS_ID}"
-mkdir -p "${CACHE_DIR_PKGS}"
+declare -g -r CACHE_DIR_INCREMENTAL="cache/incremental/${FLAVOR}" # @TODO needs a hash etc
+mkdir -p "${CACHE_DIR_PKGS}" "${CACHE_DIR_INCREMENTAL}"
 log info "CACHE_DIR_PKGS=${CACHE_DIR_PKGS}"
+log info "CACHE_DIR_INCREMENTAL=${CACHE_DIR_INCREMENTAL}"
 
 # Lets preprocess the flavor
 declare -g -r WORK_DIR="work/flavors/${FLAVOR}"
@@ -107,8 +109,9 @@ find "${WORK_DIR}" -name "*.postinst" -exec chmod +x {} \;
 
 # Prepare arrays with arguments for mkosi and docker invocation
 declare -a mkosi_opts=()
-mkosi_opts+=("-O" "/out")                   # mapped below
-mkosi_opts+=("--cache-dir=/cache/packages") # mapped below
+mkosi_opts+=("--output-dir=/out")                   # mapped below
+mkosi_opts+=("--cache-dir=/cache/incremental")      # mapped below
+mkosi_opts+=("--package-cache-dir=/cache/packages") # mapped below
 
 declare -a docker_opts=()
 docker_opts+=("run" "-it" "--rm")
@@ -116,6 +119,7 @@ docker_opts+=("--privileged") # Couldn't make it work without this.
 docker_opts+=("-v" "${SCRIPT_DIR}/${WORK_DIR}:/work")
 docker_opts+=("-v" "${SCRIPT_DIR}/${OUTPUT_DIR}:/out")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages")
+docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_INCREMENTAL}:/cache/incremental")
 docker_opts+=("${BUILDER_IMAGE_REF}")
 docker_opts+=("/bin/bash" "-c" "mkosi --version && mkosi ${mkosi_opts[*]}") # possible escaping hell here
 
