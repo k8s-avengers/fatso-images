@@ -52,9 +52,27 @@ log info "BUILDER_CACHE_PKGS_ID=${BUILDER_CACHE_PKGS_ID}"
 
 ####################################################################################################################################################################################
 
+# Customization for the builder image.
+# If found in the root of the project, it will be used by copying it in place.
+declare -g -r BUILDER_EARLY_INIT_SCRIPT="${BUILDER_DIR}/early-init.docker.sh"
+if [[ -f "${SCRIPT_DIR}/early-init.docker.${BUILDER}.sh" ]]; then
+	log info "Customizing builder image with early-init.docker.${BUILDER}.sh"
+	cp -v "${SCRIPT_DIR}/early-init.docker.${BUILDER}.sh" "${BUILDER_EARLY_INIT_SCRIPT}"
+elif [[ -f "${SCRIPT_DIR}/early-init.docker.sh" ]]; then
+	log info "Customizing builder image with early-init.docker.sh"
+	cp -v "${SCRIPT_DIR}/early-init.docker.sh" "${BUILDER_EARLY_INIT_SCRIPT}"
+else
+	log info "No custom early-init.docker.sh found, using a no-op default."
+	cat <<- DEFAULT_NO_OP > "${BUILDER_EARLY_INIT_SCRIPT}"
+		#!/usr/bin/env bash
+		echo "No-op early-init.docker.sh, create one in the root of the project to customize the builder image." >&2
+		exit 0
+	DEFAULT_NO_OP
+fi
+
 # Let's hash the builder's Dockerfile plus a few variables
 declare -g BUILDER_HASH=""
-BUILDER_HASH="$(cat "${BUILDER_DIR}/Dockerfile" "${BUILDER_CONF}" | sha256sum - | cut -d ' ' -f 1)"
+BUILDER_HASH="$(cat "${BUILDER_DIR}/Dockerfile" "${BUILDER_CONF}" "${BUILDER_EARLY_INIT_SCRIPT}" | sha256sum - | cut -d ' ' -f 1)"
 declare -g -r BUILDER_HASH="${BUILDER_HASH:0:8}" # shorten it to 8 characters, make readonly
 log info "BUILDER_HASH=${BUILDER_HASH}"
 
