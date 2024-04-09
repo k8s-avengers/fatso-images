@@ -134,8 +134,9 @@ mkosi_opts+=("--cache-dir=/cache/incremental")      # mapped below
 mkosi_opts+=("--package-cache-dir=/cache/packages") # mapped below
 
 declare -a docker_opts=()
-docker_opts+=("run" "-it" "--rm")
-docker_opts+=("--privileged") # Couldn't make it work without this.
+docker_opts+=("run" "--rm")
+[[ -t 0 ]] && docker_opts+=("-it") # If terminal is interactive, add -it
+docker_opts+=("--privileged")      # Couldn't make it work without this.
 docker_opts+=("-v" "${SCRIPT_DIR}/${WORK_DIR}:/work")
 docker_opts+=("-v" "${SCRIPT_DIR}/${OUTPUT_DIR}:/out")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages")
