@@ -94,10 +94,22 @@ mkdir -p "${WORK_DIR}"
 # For now just copy the sources...
 cp -r -v "${FLAVOR_DIR}"/* "${WORK_DIR}"/
 
-# Now, let's run the builder image, mapping WORK_DIR and OUTPUT_DIR into the container via mounts
-docker run -it --rm --privileged \
-	-v "${SCRIPT_DIR}/${WORK_DIR}:/work" \
-	-v "${SCRIPT_DIR}/${OUTPUT_DIR}:/out" \
-	-v "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages" \
-	"${BUILDER_IMAGE_REF}" \
-	/bin/bash -c "mkosi -O /out --cache-dir=/cache/packages"
+# Prepare arrays with arguments for mkosi and docker invocation
+declare -a mkosi_opts=()
+mkosi_opts+=("-O" "/out")
+mkosi_opts+=("--cache-dir=${CACHE_DIR_PKGS}")
+
+declare -a docker_opts=()
+docker_opts+=("run" "-it" "--rm")
+docker_opts+=("--privileged") # Couldn't make it work without this.
+docker_opts+=("-v" "${SCRIPT_DIR}/${WORK_DIR}:/work")
+docker_opts+=("-v" "${SCRIPT_DIR}/${OUTPUT_DIR}:/out")
+docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages")
+docker_opts+=("${BUILDER_IMAGE_REF}")
+docker_opts+=("/bin/bash" "-c" "mkosi ${mkosi_opts[*]}") # possible escaping hell here
+
+# Run the docker command
+log info "Running docker with: ${docker_opts[*]}"
+docker "${docker_opts[@]}"
+
+log info "Done! ${FLAVOR}"
