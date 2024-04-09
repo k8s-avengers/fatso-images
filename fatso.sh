@@ -151,6 +151,14 @@ mkosi_opts+=("--output-dir=/out")                   # mapped below
 mkosi_opts+=("--cache-dir=/cache/incremental")      # mapped below
 mkosi_opts+=("--package-cache-dir=/cache/packages") # mapped below
 
+# if http_proxy is set, pass it to mkosi via --proxy-url
+if [[ -n "${http_proxy}" ]]; then
+	log info "http_proxy is set, passing it to mkosi via --proxy-url (${http_proxy})"
+	mkosi_opts+=("--proxy-url=${http_proxy}")
+else
+	log debug "http_proxy is not set, skipping --proxy-url"
+fi
+
 declare -a docker_opts=()
 docker_opts+=("run" "--rm")
 [[ -t 0 ]] && docker_opts+=("-it") # If terminal is interactive, add -it
@@ -161,6 +169,8 @@ docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_INCREMENTAL}:/cache/incremental")
 docker_opts+=("${BUILDER_IMAGE_REF}")
 docker_opts+=("/bin/bash" "-c" "mkosi --version && mkosi ${mkosi_opts[*]}") # possible escaping hell here
+
+# @TODO: allow further customization of the mkosi command line
 
 # Run the docker command
 log info "Running docker with: ${docker_opts[*]}"
