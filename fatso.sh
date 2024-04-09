@@ -4,6 +4,11 @@ set -e
 
 source lib/common.sh
 
+# Get the full directory path of this script
+declare -g SCRIPT_DIR
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+log info "SCRIPT_DIR=${SCRIPT_DIR}"
+
 check_docker_daemon_for_sanity
 
 declare -g -r FLAVOR="${1:-"ubuntu-noble-baremetal"}"
@@ -41,6 +46,10 @@ source "${BUILDER_CONF}"
 [[ -z "${BUILDER_DESCRIPTION}" ]] && log error "BUILDER_DESCRIPTION is not set" && exit 1
 log info "BUILDER_DESCRIPTION=${BUILDER_DESCRIPTION}"
 
+# Same for BUILDER_CACHE_PKGS_ID
+[[ -z "${BUILDER_CACHE_PKGS_ID}" ]] && log error "BUILDER_CACHE_PKGS_ID is not set" && exit 1
+log info "BUILDER_CACHE_PKGS_ID=${BUILDER_CACHE_PKGS_ID}"
+
 ####################################################################################################################################################################################
 
 # Let's hash the builder's Dockerfile plus a few variables
@@ -63,3 +72,32 @@ else
 	)
 	log info "Build done for ${BUILDER_IMAGE_REF}"
 fi
+
+####################################################################################################################################################################################
+
+# Prepare output dir
+declare -g -r OUTPUT_DIR="out/flavors/${FLAVOR}"
+rm -rf "${OUTPUT_DIR}"
+mkdir -p "${OUTPUT_DIR}"
+
+# Prepare cache dirs
+declare -g -r CACHE_DIR_PKGS="cache/pkgs/${BUILDER_CACHE_PKGS_ID}"
+mkdir -p "${CACHE_DIR_PKGS}"
+log info "CACHE_DIR_PKGS=${CACHE_DIR_PKGS}"
+
+# Lets preprocess the flavor
+declare -g -r WORK_DIR="work/flavors/${FLAVOR}"
+log info "Using WORK_DIR=${WORK_DIR}"
+rm -rf "${WORK_DIR}"
+mkdir -p "${WORK_DIR}"
+
+# For now just copy the sources...
+cp -r -v "${FLAVOR_DIR}"/* "${WORK_DIR}"/
+
+# Now, let's run the builder image, mapping WORK_DIR and OUTPUT_DIR into the container via mounts
+docker run -it --rm --privileged \
+	-v "${SCRIPT_DIR}/${WORK_DIR}:/work" \
+	-v "${SCRIPT_DIR}/${OUTPUT_DIR}:/out" \
+	-v "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages" \
+	"${BUILDER_IMAGE_REF}" \
+	/bin/bash -c "mkosi -O /out --cache-dir=/cache/packages"
