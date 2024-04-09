@@ -75,10 +75,19 @@ fi
 
 ####################################################################################################################################################################################
 
-# Prepare output dir
+# Prepare output dir (mkosi's output dir)
 declare -g -r OUTPUT_DIR="out/flavors/${FLAVOR}"
 rm -rf "${OUTPUT_DIR}"
 mkdir -p "${OUTPUT_DIR}"
+
+declare -g -r OUTPUT_IMAGE_FILE_RAW="${OUTPUT_DIR}/image.raw"
+log info "Expecting output image at ${OUTPUT_IMAGE_FILE_RAW}"
+
+# Prepare dist dist (final output dir)
+declare -g -r DIST_DIR="dist"
+mkdir -p "${DIST_DIR}"
+declare -g -r DIST_FILE_IMG_RAW_GZ="${DIST_DIR}/${FLAVOR}.img.gz"
+log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
 
 # Prepare cache dirs
 declare -g -r CACHE_DIR_PKGS="cache/pkgs/${BUILDER_CACHE_PKGS_ID}"
@@ -96,8 +105,8 @@ cp -r -v "${FLAVOR_DIR}"/* "${WORK_DIR}"/
 
 # Prepare arrays with arguments for mkosi and docker invocation
 declare -a mkosi_opts=()
-mkosi_opts+=("-O" "/out")
-mkosi_opts+=("--cache-dir=${CACHE_DIR_PKGS}")
+mkosi_opts+=("-O" "/out")                   # mapped below
+mkosi_opts+=("--cache-dir=/cache/packages") # mapped below
 
 declare -a docker_opts=()
 docker_opts+=("run" "-it" "--rm")
@@ -112,4 +121,14 @@ docker_opts+=("/bin/bash" "-c" "mkosi ${mkosi_opts[*]}") # possible escaping hel
 log info "Running docker with: ${docker_opts[*]}"
 docker "${docker_opts[@]}"
 
-log info "Done! ${FLAVOR}"
+log info "Done building mkosi! ${FLAVOR}"
+
+# Compress the image from OUTPUT_IMAGE_FILE_RAW to DIST_FILE_IMG_RAW_GZ, using pigz
+declare -i size_orig size_compress
+size_orig=$(stat -c %s "${OUTPUT_IMAGE_FILE_RAW}")
+log info "Compressing image to ${DIST_FILE_IMG_RAW_GZ}"
+pigz -1 -c "${OUTPUT_IMAGE_FILE_RAW}" > "${DIST_FILE_IMG_RAW_GZ}"
+size_compress=$(stat -c %s "${DIST_FILE_IMG_RAW_GZ}")
+log info "Done compressing image to ${DIST_FILE_IMG_RAW_GZ} from ${size_orig} to ${size_compress} bytes."
+
+log info "Distribution done."
