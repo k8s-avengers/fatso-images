@@ -12,8 +12,10 @@ cat /etc/resolv.conf || true
 # ---------------------------- install updates ---------------------------------
 echo -e "\n\nInstalling updates...\n"
 
-# add package repository for updates to sources list
-# add-apt-repository "deb http://archive.ubuntu.com/ubuntu focal-updates main universe"
+mount || true
+df -h || true
+echo "PATH: $PATH" || true
+
 
 # update package lists
 apt-get -y update

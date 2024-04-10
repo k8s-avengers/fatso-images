@@ -110,6 +110,7 @@ mkdir -p "${WORK_DIR}"
 cp -r -v "${FLAVOR_DIR}"/* "${WORK_DIR}"/
 # ... and ensure any *.postinst files, if any, are executable
 find "${WORK_DIR}" -name "*.postinst" -exec chmod +x {} \;
+find "${WORK_DIR}" -name "*.postinst.chroot" -exec chmod +x {} \;
 
 ####################################################################################################################################################################################
 # Version calc, for GHA's benefit
