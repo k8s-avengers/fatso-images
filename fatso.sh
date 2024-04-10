@@ -169,7 +169,7 @@ docker_opts+=("-v" "${SCRIPT_DIR}/${OUTPUT_DIR}:/out")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_INCREMENTAL}:/cache/incremental")
 docker_opts+=("${BUILDER_IMAGE_REF}")
-docker_opts+=("/bin/bash" "-c" "mkosi --version && mkosi ${mkosi_opts[*]}") # possible escaping hell here
+docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && ls -laR && /usr/local/bin/mkosi ${mkosi_opts[*]}") # possible escaping hell here
 
 # @TODO: allow further customization of the mkosi command line
 
