@@ -6,15 +6,10 @@ set -x
 ls -la /etc/resolv.conf || true
 cat /etc/resolv.conf || true
 
-# ---------------------------- install updates ---------------------------------
-echo -e "\nDunno rocky...\n"
+echo "chrooted postinst for rocky-8-baremetal...."
 
 echo "PATH: $PATH" || true
-
-ls -laR / || true
-
-which wget || true
-ls -la /usr/bin/wget || true
+echo "http_proxy: ${http_proxy}" || true
 
 # No neofetch in Rocky 8, use screenfetch
 wget -O /usr/bin/neofetch "https://raw.githubusercontent.com/KittyKatt/screenFetch/master/screenfetch-dev"
