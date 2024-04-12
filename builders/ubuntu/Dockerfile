@@ -16,8 +16,7 @@ RUN echo -n 'system mkosi version: ' && mkosi --version
 
 # Install mkosi from source -- the version in the Ubuntu repos is too old
 WORKDIR /mkosi-src
-RUN git clone "https://github.com/systemd/mkosi"
-RUN cd mkosi && git checkout "v22" # released v22 version from tag
+RUN git clone "https://github.com/systemd/mkosi" && cd mkosi && git checkout "7a817f3a808240e84aad9d18131c50af5897741e" # Specific master revision proven to work 
 RUN ln -s /mkosi-src/mkosi/bin/mkosi /usr/local/bin/mkosi
 RUN echo -n 'local mkosi version: ' && /usr/local/bin/mkosi --version
 
