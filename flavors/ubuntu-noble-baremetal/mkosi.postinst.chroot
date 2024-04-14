@@ -37,17 +37,44 @@ systemctl mask systemd-networkd.service
 # NOT if using cloud-init... but yes for now
 systemctl disable NetworkManager-wait-online.service
 
-# mask stuff for tpm2 / pcrlock that is enabled when machine is booted via uki
-# systemctl mask systemd-pcrlock-file-system.service
-# systemctl mask systemd-pcrlock-firmware-code.service
-# systemctl mask systemd-pcrlock-firmware-config.service
-# systemctl mask systemd-pcrlock-machine-id.service
-# systemctl mask systemd-pcrlock-make-policy.service
-# systemctl mask systemd-pcrlock-secureboot-policy.service
-# systemctl mask systemd-tpm2-setup.service
+# mask stuff for tpm2 / pcrlock that is enabled when machine is booted via uki, but systemd-pcrlock not available in Ubuntu (yet?)
+systemctl mask systemd-pcrlock-file-system.service
+systemctl mask systemd-pcrlock-firmware-code.service
+systemctl mask systemd-pcrlock-firmware-config.service
+systemctl mask systemd-pcrlock-machine-id.service
+systemctl mask systemd-pcrlock-make-policy.service
+systemctl mask systemd-pcrlock-secureboot-policy.service
+systemctl mask systemd-tpm2-setup.service
 
 # locale
-sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
-locale-gen
+#sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+#locale-gen
+
+# Config systemd repart to grow the rootfs on first boot
+mkdir -p /usr/lib/repart.d
+cat <<- EOD > /usr/lib/repart.d/10-root.conf
+	[Partition]
+	Type=root
+EOD
+cat /usr/lib/repart.d/10-root.conf
+
+# Remove sshd host keys so they're generated on first boot # @TODO: not that simple; smth must be setup to regen; easier to use cloud-init
+# rm -fv /etc/ssh/ssh_host_*
+
+# Create a script to reboot the system in PXE mode again.
+mkdir -p /usr/local/sbin
+cat <<- 'EOD' > /usr/local/sbin/pxe-boot-this
+#!/bin/bash
+set -e 
+set -x
+declare pxe_efi_bootnum="$(efibootmgr | grep "IPV4" | cut -d " " -f 1 | sed -e 's/Boot//g' | sed -e 's/*//g')"
+echo "PXE bootnum: ${pxe_efi_bootnum}"
+efibootmgr --bootnext "${pxe_efi_bootnum}"
+sync
+echo "Rebooting in PXE mode in 2s..."
+sleep 2
+reboot -f
+EOD
+chmod +x /usr/local/sbin/pxe-boot-this
 
 echo "DONE!"
