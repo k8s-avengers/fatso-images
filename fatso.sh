@@ -112,6 +112,13 @@ cp -r -v "${FLAVOR_DIR}"/* "${WORK_DIR}"/
 find "${WORK_DIR}" -name "*.postinst" -exec chmod +x {} \;
 find "${WORK_DIR}" -name "*.postinst.chroot" -exec chmod +x {} \;
 
+# @TODO: template-process mkosi.conf & friends
+
+# declare -g INCREMENTAL_CACHE_HASH=""
+# # Let's hash the final content (cat) of mkosi.conf, so we can use it as cache key for mkosi's incremental cache
+# INCREMENTAL_CACHE_HASH="$(cat "${WORK_DIR}/mkosi.conf" | sha256sum - | cut -d ' ' -f 1)"
+# log info "INCREMENTAL_CACHE_HASH=${INCREMENTAL_CACHE_HASH}"
+
 ####################################################################################################################################################################################
 # Version calc, for GHA's benefit
 
@@ -148,9 +155,10 @@ log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
 
 # Prepare arrays with arguments for mkosi and docker invocation
 declare -a mkosi_opts=()
-mkosi_opts+=("--output-dir=/out")                   # mapped below
-mkosi_opts+=("--cache-dir=/cache/incremental")      # mapped below
-mkosi_opts+=("--package-cache-dir=/cache/packages") # mapped below
+mkosi_opts+=("--output-dir=/out")                        # mapped below
+mkosi_opts+=("--cache-dir=/cache/incremental/${FLAVOR}") # mapped below
+mkosi_opts+=("--incremental")                            # mapped below
+mkosi_opts+=("--package-cache-dir=/cache/packages")      # mapped below
 
 # if http_proxy is set, pass it to mkosi via --proxy-url
 if [[ -n "${http_proxy}" ]]; then
