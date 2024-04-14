@@ -6,7 +6,7 @@ WORKDIR /extra-dockerfile
 ADD early-init.docker.sh /extra-dockerfile/early-init.docker.sh
 RUN bash -e /extra-dockerfile/early-init.docker.sh
 
-RUN apt-get update && apt-get install -y xfsprogs git kmod mkosi dpkg-dev devscripts systemd-ukify systemd-boot cpio mtools
+RUN apt-get update && apt-get install -y xfsprogs git kmod mkosi dpkg-dev devscripts grub-efi cpio mtools
 
 WORKDIR /cache/packages
 WORKDIR /out

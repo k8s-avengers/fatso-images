@@ -15,6 +15,21 @@ echo "PATH: $PATH" || true
 echo "HOME: $HOME" || true
 echo "http_proxy: ${http_proxy}" || true
 
+# grub fixage @TODO this duplicates the cmdline used in mkosi
+echo "---------------- GRUB -------------------"
+dpkg -l | grep -i grub
+cat <<- EOD > /etc/default/grub.d/98-simple.cfg
+	GRUB_CMDLINE_LINUX_DEFAULT="rw intel_iommu=on loglevel=7 console=ttyS0,115200 console=tty0 console=ttyUSB0,115200 "
+	GRUB_TIMEOUT_STYLE=menu                             
+	GRUB_TIMEOUT=3 
+	GRUB_DISABLE_SUBMENU=y
+	GRUB_DISABLE_OS_PROBER=false
+	#GRUB_FONT="/usr/share/grub/unicode.pf2"
+	GRUB_GFXPAYLOAD=keep
+EOD
+
+echo "---------------- GRUB -------------------"
+
 # add ssh keys
 
 ssh-import-id gh:rpardini
@@ -46,9 +61,9 @@ systemctl mask systemd-pcrlock-make-policy.service
 systemctl mask systemd-pcrlock-secureboot-policy.service
 systemctl mask systemd-tpm2-setup.service
 
-# locale
-#sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
-#locale-gen
+# locale fix
+sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+locale-gen
 
 # Config systemd repart to grow the rootfs on first boot
 mkdir -p /usr/lib/repart.d
@@ -64,16 +79,15 @@ cat /usr/lib/repart.d/10-root.conf
 # Create a script to reboot the system in PXE mode again.
 mkdir -p /usr/local/sbin
 cat <<- 'EOD' > /usr/local/sbin/pxe-boot-this
-#!/bin/bash
-set -e 
-set -x
-declare pxe_efi_bootnum="$(efibootmgr | grep "IPV4" | cut -d " " -f 1 | sed -e 's/Boot//g' | sed -e 's/*//g')"
-echo "PXE bootnum: ${pxe_efi_bootnum}"
-efibootmgr --bootnext "${pxe_efi_bootnum}"
-sync
-echo "Rebooting in PXE mode in 2s..."
-sleep 2
-reboot -f
+	#!/bin/bash
+	set -e 
+	declare pxe_efi_bootnum="$(efibootmgr | grep "IPV4" | cut -d " " -f 1 | sed -e 's/Boot//g' | sed -e 's/*//g')"
+	echo "PXE bootnum: ${pxe_efi_bootnum}"
+	efibootmgr --bootnext "${pxe_efi_bootnum}"
+	sync
+	echo "Rebooting in PXE mode in 2s..."
+	sleep 2
+	reboot -f
 EOD
 chmod +x /usr/local/sbin/pxe-boot-this
 
