@@ -13,7 +13,37 @@ echo "chrooted postinst for ubuntu-noble-baremetal...."
 echo "PATH: $PATH" || true
 echo "http_proxy: ${http_proxy}" || true
 
-# # update package lists
-# apt-get -y update
-# apt-get -y upgrade
-# apt-get autoremove --purge
+# update package lists so apt is ready-to-go when image deployed
+apt-get -y update
+
+# let NetworkManager manage the network
+touch /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
+ls -la /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
+sed "s/managed=\(.*\)/managed=true/g" -i /etc/NetworkManager/NetworkManager.conf
+systemctl mask systemd-networkd.service
+
+# NOT if using cloud-init... but yes for now
+systemctl disable NetworkManager-wait-online.service
+
+# mask stuff for tpm2 / pcrlock that is enabled when machine is booted via uki
+# systemctl mask systemd-pcrlock-file-system.service
+# systemctl mask systemd-pcrlock-firmware-code.service
+# systemctl mask systemd-pcrlock-firmware-config.service
+# systemctl mask systemd-pcrlock-machine-id.service
+# systemctl mask systemd-pcrlock-make-policy.service
+# systemctl mask systemd-pcrlock-secureboot-policy.service
+# systemctl mask systemd-tpm2-setup.service
+
+# add ssh keys
+ssh-import-id gh:rpardini
+ssh-import-id gh:ArdaXi
+#ssh-import-id gh:willemm
+ssh-import-id gh:yifongau
+
+cat /root/.ssh/authorized_keys
+
+# locale
+sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+locale-gen
+
+echo "DONE!"
