@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -e
+set -x
+
+ls -la /etc/resolv.conf || true
+cat /etc/resolv.conf || true
+
+echo "chrooted postinst for rocky-8-baremetal...."
+
+echo "PATH: $PATH" || true
+echo "http_proxy: ${http_proxy}" || true
+
+# No neofetch in Rocky 8, use screenfetch
+wget -O /usr/bin/neofetch "https://raw.githubusercontent.com/KittyKatt/screenFetch/master/screenfetch-dev"
+chmod +x /usr/bin/neofetch
+ls -la /usr/bin/neofetch
