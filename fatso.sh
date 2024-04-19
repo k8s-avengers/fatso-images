@@ -95,10 +95,12 @@ fi
 
 # Prepare cache dirs
 declare -g -r CACHE_DIR_PKGS="cache/pkgs/${BUILDER_CACHE_PKGS_ID}"
-declare -g -r CACHE_DIR_INCREMENTAL="cache/incremental/${FLAVOR}" # @TODO needs a hash etc
+declare -g -r CACHE_DIR_INCREMENTAL="cache/incremental/${FLAVOR}"
+declare -g -r CACHE_DIR_WORKSPACE="cache/workspace/${FLAVOR}"
 mkdir -p "${CACHE_DIR_PKGS}" "${CACHE_DIR_INCREMENTAL}"
 log info "CACHE_DIR_PKGS=${CACHE_DIR_PKGS}"
 log info "CACHE_DIR_INCREMENTAL=${CACHE_DIR_INCREMENTAL}"
+log info "CACHE_DIR_WORKSPACE=${CACHE_DIR_WORKSPACE}"
 
 # Lets preprocess the flavor
 declare -g -r WORK_DIR="work/flavors/${FLAVOR}"
@@ -155,10 +157,12 @@ log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
 
 # Prepare arrays with arguments for mkosi and docker invocation
 declare -a mkosi_opts=()
-mkosi_opts+=("--output-dir=/out")                        # mapped below
-mkosi_opts+=("--cache-dir=/cache/incremental/${FLAVOR}") # mapped below
-mkosi_opts+=("--incremental")                            # mapped below
-mkosi_opts+=("--package-cache-dir=/cache/packages")      # mapped below
+mkosi_opts+=("--debug")
+mkosi_opts+=("--output-dir=/out")                   # mapped below
+mkosi_opts+=("--cache-dir=/cache/incremental")      # mapped below
+mkosi_opts+=("--incremental")                       # mapped below
+mkosi_opts+=("--package-cache-dir=/cache/packages") # mapped below
+mkosi_opts+=("--workspace-dir=/cache/workspace")    # mapped below
 
 # if http_proxy is set, pass it to mkosi via --proxy-url
 if [[ -n "${http_proxy}" ]]; then
@@ -176,8 +180,14 @@ docker_opts+=("-v" "${SCRIPT_DIR}/${WORK_DIR}:/work")
 docker_opts+=("-v" "${SCRIPT_DIR}/${OUTPUT_DIR}:/out")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_INCREMENTAL}:/cache/incremental")
+docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_WORKSPACE}:/cache/workspace")
 docker_opts+=("${BUILDER_IMAGE_REF}")
-docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && ls -laR && /usr/local/bin/mkosi ${mkosi_opts[*]}") # possible escaping hell here
+
+# Important: command _after_ the options
+declare real_cmd="/usr/local/bin/mkosi ${mkosi_opts[*]} build"
+log info "Real mkosi invocation: ${real_cmd}"
+
+docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && ls -laR && ls -la mkosi.conf && ${real_cmd}") # possible escaping hell here
 
 # @TODO: allow further customization of the mkosi command line
 
