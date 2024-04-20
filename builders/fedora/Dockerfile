@@ -1,11 +1,11 @@
-FROM fedora:latest
+FROM fedora:rawhide
 
 # A customization entrypoint, so users can easily inject their proxies / ca-certificates / etc.
 WORKDIR /extra-dockerfile
 ADD early-init.docker.sh /extra-dockerfile/early-init.docker.sh
 RUN bash -e /extra-dockerfile/early-init.docker.sh
 
-RUN dnf -y install --best --allowerasing systemd-ukify systemd-boot cpio mtools xfsprogs git kmod mkosi
+RUN dnf -y install --best --allowerasing systemd-ukify systemd-boot systemd-boot-unsigned cpio mtools xfsprogs git kmod mkosi
 
 WORKDIR /cache/packages
 WORKDIR /out
