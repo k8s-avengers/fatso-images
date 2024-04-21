@@ -47,8 +47,8 @@ ls -la /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
 sed "s/managed=\(.*\)/managed=true/g" -i /etc/NetworkManager/NetworkManager.conf
 systemctl mask systemd-networkd.service
 
-# NOT if using cloud-init... but yes for now
-systemctl disable NetworkManager-wait-online.service
+# make cloud-init happy by waiting for network (NetworkManager version, would be different for systemd-networkd/netplan)
+systemctl enable NetworkManager-wait-online.service
 
 # mask stuff for tpm2 / pcrlock that is enabled when machine is booted via uki, but systemd-pcrlock not available in Ubuntu (yet?)
 systemctl mask systemd-pcrlock-file-system.service
