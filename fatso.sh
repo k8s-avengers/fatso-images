@@ -157,7 +157,9 @@ log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
 
 # Prepare arrays with arguments for mkosi and docker invocation
 declare -a mkosi_opts=()
-mkosi_opts+=("--debug")
+if [[ "${DEBUG}" == "yes" ]]; then
+	mkosi_opts+=("--debug")
+fi
 mkosi_opts+=("--output-dir=/out")                   # mapped below
 mkosi_opts+=("--cache-dir=/cache/incremental")      # mapped below
 mkosi_opts+=("--incremental")                       # mapped below
