@@ -41,14 +41,8 @@ cat /root/.ssh/authorized_keys
 # update package lists so apt is ready-to-go when image deployed
 apt-get -y update
 
-# let NetworkManager manage the network
-touch /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
-ls -la /etc/NetworkManager/conf.d/10-globally-managed-devices.conf
-sed "s/managed=\(.*\)/managed=true/g" -i /etc/NetworkManager/NetworkManager.conf
-systemctl mask systemd-networkd.service
-
-# make cloud-init happy by waiting for network (NetworkManager version, would be different for systemd-networkd/netplan)
-systemctl enable NetworkManager-wait-online.service
+# make cloud-init happy by waiting for network (systemd-neworkd+netplan version)
+systemctl enable systemd-networkd-wait-online.service
 
 # locale fix
 sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
