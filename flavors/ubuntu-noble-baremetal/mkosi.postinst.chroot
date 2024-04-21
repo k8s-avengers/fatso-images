@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -e
-set -x
 
 export DEBIAN_FRONTEND=noninteractive
 export HOME="/root" # No HOME is set otherwise, force it
@@ -131,5 +130,111 @@ cat <<- 'EOD' > /usr/local/sbin/restore-grub-normalcy
 	update-grub
 EOD
 chmod +x /usr/local/sbin/restore-grub-normalcy
+
+#### k8s stuff
+## containerd; using a prebuilt deb with many necessary tools in k8s-worker-containerd
+
+declare latest_release_version
+latest_release_version=$(curl -sL "https://api.github.com/repos/armsurvivors/k8s-worker-containerd/releases/latest" | jq -r '.tag_name')
+
+declare deb_file down_url down_dir full_deb_path
+
+deb_file="k8s-worker-containerd_amd64_noble.deb"
+down_url="https://github.com/armsurvivors/k8s-worker-containerd/releases/latest/download/${deb_file}"
+
+down_dir="/root/k8s-worker-containerd"
+mkdir -p "${down_dir}"
+
+full_deb_path="${down_dir}/${latest_release_version}_${deb_file}"
+
+echo "Will download ${full_deb_path} from latest release..."
+wget --progress=dot:mega --local-encoding=UTF-8 --output-document="${full_deb_path}.tmp" "${down_url}"
+mv -v "${full_deb_path}.tmp" "${full_deb_path}"
+
+apt -y install "${full_deb_path}"
+rm -v "/${full_deb_path}"
+
+# Check by running it under chroot
+containerd --version
+
+# Enable its systemd service
+systemctl enable containerd.service
+
+# Configure containerd to use systemd cgroup driver
+mkdir -p /etc/containerd
+containerd config default > /etc/containerd/config.toml
+
+# Keep a copy of the original config
+cp -v /etc/containerd/config.toml /etc/containerd/config.toml.orig
+
+# Manipulating .toml in bash is even worse than YAML. This should NOT be done here.
+if grep -q SystemdCgroup /etc/containerd/config.toml; then
+	# If it's already there make sure it's on
+	sed -i -e 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+else
+	# Terrible hack to add SystemdCgroup.
+	sed -i -e 's/runtimes.runc.options]/runtimes.runc.options]\n            SystemdCgroup = true/' /etc/containerd/config.toml
+fi
+
+echo "Config cri-tools to use containerd..."
+cat <<- EOD > /etc/crictl.yaml
+	runtime-endpoint: unix:///var/run/containerd/containerd.sock
+EOD
+
+### k8s-related settings
+echo "Configuring systemd-network to not interefere with Cilium..."
+# https://docs.cilium.io/en/stable/operations/system_requirements/#systemd-based-distributions
+cat <<- EOD > /etc/systemd/networkd.conf
+	[Network]
+	ManageForeignRoutes=no
+	ManageForeignRoutingPolicyRules=no
+EOD
+
+echo "Module br_netfilter ..."
+cat <<- EOF > /etc/modules-load.d/k8s.conf
+	br_netfilter
+EOF
+
+echo "Tuning bridge-nf-call-iptables/ip6tables in sysctl..."
+cat <<- EOF > /etc/sysctl.d/k8s.conf
+	net.bridge.bridge-nf-call-iptables = 1
+	net.bridge.bridge-nf-call-ip6tables = 1
+	net.ipv4.ip_forward = 1
+	net.ipv6.conf.all.forwarding = 1
+	net.ipv6.conf.all.disable_ipv6 = 0
+	net.ipv4.tcp_congestion_control = bbr
+	vm.overcommit_memory = 1
+	kernel.panic = 10
+	kernel.panic_on_oops = 1
+	fs.inotify.max_user_instances = 524288
+	fs.inotify.max_user_watches = 524288
+EOF
+
+### k8s proper, via official deb pkg repos
+K8S_MAJOR_MINOR="1.28"
+echo "Adding k8s binaries version ${K8S_MAJOR_MINOR}"
+
+# Grab the GPG key
+mkdir -p /etc/apt/keyrings
+curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${K8S_MAJOR_MINOR}/deb/Release.key" | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# Add the SUSE-OBS repository
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${K8S_MAJOR_MINOR}/deb/ /" > "/etc/apt/sources.list.d/kubernetes.list"
+apt -y update
+
+# Install the k8s binaries
+apt -y install "kubeadm" "kubelet" "kubectl"
+
+kubeadm version
+systemctl enable kubelet.service
+
+# Hold the k8s packages
+apt-mark hold kubeadm kubelet kubectl
+
+# Clean apt cache
+apt -y clean
+
+# Show the largest folders
+du -h -d 3 -x / | sort -h | tail -n 20
 
 echo "DONE!"
