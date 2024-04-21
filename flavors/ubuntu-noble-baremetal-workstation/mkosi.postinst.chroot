@@ -35,9 +35,6 @@ ssh-import-id gh:ArdaXi
 #ssh-import-id gh:willemm
 ssh-import-id gh:yifongau
 
-ls -la "${HOME}/.ssh/authorized_keys"
-cat /root/.ssh/authorized_keys
-
 # update package lists so apt is ready-to-go when image deployed
 apt-get -y update
 
@@ -89,10 +86,13 @@ cat <<- 'EOD' > /usr/local/sbin/pxe-boot-this
 EOD
 chmod +x /usr/local/sbin/pxe-boot-this
 
+# nvidia drivers, packages installed here and not by mkosi, caching suffers
+apt -y install linux-modules-nvidia-535-server-generic nvidia-utils-535-server nvtop
+
 # Black list nouveau module, so nvidia can load.
-cat << EOF | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
-blacklist nouveau
-options nouveau modeset=0
+cat <<- EOF > /etc/modprobe.d/blacklist-nouveau.conf
+	blacklist nouveau
+	options nouveau modeset=0
 EOF
 
 # Actually, obliterate the nouveau module away so mkosi don't pick it up for its initrd either

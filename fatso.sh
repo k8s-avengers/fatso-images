@@ -11,7 +11,7 @@ log info "SCRIPT_DIR=${SCRIPT_DIR}"
 
 check_docker_daemon_for_sanity
 
-declare -g -r FLAVOR="${1:-"ubuntu-noble-baremetal"}"
+declare -g -r FLAVOR="${1:-"ubuntu-noble-baremetal-cloud-k8s-nvidia"}"
 declare -g -r FLAVOR_DIR="flavors/${FLAVOR}"
 declare -g -r FLAVOR_CONF="${FLAVOR_DIR}/flavor.conf.sh"
 

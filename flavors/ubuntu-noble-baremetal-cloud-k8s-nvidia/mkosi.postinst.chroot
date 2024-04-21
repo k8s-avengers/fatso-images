@@ -71,6 +71,9 @@ cat <<- 'EOD' > /usr/local/sbin/pxe-boot-this
 EOD
 chmod +x /usr/local/sbin/pxe-boot-this
 
+# nvidia drivers, packages installed here and not by mkosi, caching suffers
+apt -y install linux-modules-nvidia-535-server-generic nvidia-utils-535-server nvtop
+
 # Black list nouveau module, so nvidia can load.
 cat <<- EOF > /etc/modprobe.d/blacklist-nouveau.conf
 	blacklist nouveau
