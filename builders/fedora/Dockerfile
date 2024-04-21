@@ -1,13 +1,12 @@
 FROM fedora:40
 
 # A customization entrypoint, so users can easily inject their proxies / ca-certificates / etc.
+# @TODO this might end up picking up something meant for an Ubuntu builder
 WORKDIR /extra-dockerfile
 ADD early-init.docker.sh /extra-dockerfile/early-init.docker.sh
 RUN bash -e /extra-dockerfile/early-init.docker.sh
 
-RUN dnf -y install --best --allowerasing systemd-ukify systemd-boot systemd-boot-unsigned cpio mtools xfsprogs git kmod mkosi
-RUN dnf -y install --best --allowerasing apt dpkg ubu-keyring
-RUN dnf -y install --best --allowerasing grub2-efi-x64 grub2-efi-x64-modules grub2-tools grub2-tools-efi grub2-tools-extra
+RUN dnf -y install --best --allowerasing systemd-ukify systemd-boot systemd-boot-unsigned cpio mtools xfsprogs git kmod mkosi apt dpkg ubu-keyring grub2-efi-x64 grub2-efi-x64-modules grub2-tools grub2-tools-efi grub2-tools-extra
 
 WORKDIR /cache/packages
 WORKDIR /out

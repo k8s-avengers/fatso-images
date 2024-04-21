@@ -8,7 +8,7 @@ jobs:
     env:
       BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      IMAGE_VERSION: "1002"
+      IMAGE_VERSION: "1003"
     permissions:
       packages: write # to write to ghcr.io
       contents: write # to commit to the repo
@@ -17,8 +17,10 @@ jobs:
       fail-fast: false # let other jobs try to complete if one fails
       matrix:
         include:
-          - { id: "ubuntu-noble-baremetal", env: { FLAVOR: "ubuntu-noble-baremetal" } }
-          - { id: "rocky-8-baremetal", env: { FLAVOR: "rocky-8-baremetal" } }
+          - { id: "ubuntu-noble-baremetal-cloud-k8s-nvidia", env: { FLAVOR: "ubuntu-noble-baremetal-cloud-k8s-nvidia" } }
+          - { id: "ubuntu-noble-baremetal-workstation", env: { FLAVOR: "ubuntu-noble-baremetal-workstation" } }
+          - { id: "el-9-baremetal", env: { FLAVOR: "el-9-baremetal" } }
+          #- { id: "rocky-8-baremetal", env: { FLAVOR: "rocky-8-baremetal" } }
     name: "${{ matrix.id }}"
     steps:
       - name: cleanup GHA hosted runner
