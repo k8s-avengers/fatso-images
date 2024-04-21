@@ -50,15 +50,6 @@ systemctl mask systemd-networkd.service
 # make cloud-init happy by waiting for network (NetworkManager version, would be different for systemd-networkd/netplan)
 systemctl enable NetworkManager-wait-online.service
 
-# mask stuff for tpm2 / pcrlock that is enabled when machine is booted via uki, but systemd-pcrlock not available in Ubuntu (yet?)
-systemctl mask systemd-pcrlock-file-system.service
-systemctl mask systemd-pcrlock-firmware-code.service
-systemctl mask systemd-pcrlock-firmware-config.service
-systemctl mask systemd-pcrlock-machine-id.service
-systemctl mask systemd-pcrlock-make-policy.service
-systemctl mask systemd-pcrlock-secureboot-policy.service
-systemctl mask systemd-tpm2-setup.service
-
 # locale fix
 sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
 locale-gen
