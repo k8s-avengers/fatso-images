@@ -19,12 +19,11 @@ echo "http_proxy: ${http_proxy}" || true
 echo "---------------- GRUB -------------------"
 dpkg -l | grep -i grub
 cat <<- EOD > /etc/default/grub.d/98-simple.cfg
-	GRUB_CMDLINE_LINUX_DEFAULT="rw intel_iommu=on loglevel=7 console=ttyS0,115200 console=tty0 console=ttyUSB0,115200 "
-	GRUB_TIMEOUT_STYLE=menu                             
-	GRUB_TIMEOUT=3 
+	GRUB_CMDLINE_LINUX_DEFAULT="rw intel_iommu=on loglevel=7 console=ttyS0,115200 console=tty0 console=ttyUSB0,115200"
+	GRUB_TIMEOUT_STYLE=menu
+	GRUB_TIMEOUT=3
 	GRUB_DISABLE_SUBMENU=y
 	GRUB_DISABLE_OS_PROBER=false
-	#GRUB_FONT="/usr/share/grub/unicode.pf2"
 	GRUB_GFXPAYLOAD=keep
 EOD
 
@@ -65,7 +64,7 @@ systemctl mask systemd-tpm2-setup.service
 sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
 locale-gen
 
-# Config systemd repart to grow the rootfs on first boot
+# Config systemd repart to manage the rootfs on first boot
 mkdir -p /usr/lib/repart.d
 cat <<- EOD > /usr/lib/repart.d/10-root.conf
 	[Partition]
@@ -90,5 +89,47 @@ cat <<- 'EOD' > /usr/local/sbin/pxe-boot-this
 	reboot -f
 EOD
 chmod +x /usr/local/sbin/pxe-boot-this
+
+# Black list nouveau module, so nvidia can load.
+cat << EOF | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
+blacklist nouveau
+options nouveau modeset=0
+EOF
+
+# Actually, obliterate the nouveau module away so mkosi don't pick it up for its initrd either
+find /usr/lib -type f -name '*nouveau*' -delete
+
+# Configure for (not used in image, but for later runtime)
+# /etc/initramfs-tools/initramfs.conf
+cat <<- EOD > /etc/initramfs-tools/initramfs.conf
+	MODULES=most
+	BUSYBOX=auto
+	COMPRESS=zstd
+	DEVICE=
+	NFSROOT=auto
+	RUNSIZE=10%
+	FSTYPE=auto
+EOD
+
+# Let's setup an /etc/fstab so things are mounted and rootfs is grown
+cat <<- EOD > /etc/fstab
+	PARTLABEL="root-x86-64" / ext4 defaults,noatime,x-systemd.growfs 0 1
+	# attention: the way systemd wants it, in /boot; I'd rather have it in /boot/efi cos I'm ancient
+	PARTLABEL="esp" /boot vfat defaults 0 2 
+EOD
+cat /etc/fstab
+
+# Create a script to restore grub normalcy
+mkdir -p /usr/local/sbin
+cat <<- 'EOD' > /usr/local/sbin/restore-grub-normalcy
+	#!/bin/bash
+	set -e
+	rm -rf /boot/ubuntu /boot/loader /boot/EFI
+	mkdir -p /boot/EFI
+	update-initramfs -k all -c
+	grub-install --efi-directory /boot --bootloader-id=fatso 
+	update-grub
+EOD
+chmod +x /usr/local/sbin/restore-grub-normalcy
 
 echo "DONE!"
