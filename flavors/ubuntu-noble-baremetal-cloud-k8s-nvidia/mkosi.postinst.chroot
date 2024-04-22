@@ -41,6 +41,9 @@ apt-get -y update
 # make cloud-init happy by waiting for network (systemd-neworkd+netplan version)
 systemctl enable systemd-networkd-wait-online.service
 
+# make everyone who has ntp configured in their dhcp happy, and everyone else unhappy
+systemctl enable systemd-time-wait-sync.service
+
 # locale fix
 sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
 locale-gen
