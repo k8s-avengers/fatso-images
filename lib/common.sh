@@ -16,6 +16,7 @@ function log() {
 function install_dependencies() {
 	declare -a debian_pkgs=()
 	[[ ! -f /usr/bin/jq ]] && debian_pkgs+=("jq")
+	[[ ! -f /usr/bin/crudini ]] && debian_pkgs+=("crudini")
 
 	# If running on Debian or Ubuntu...
 	if [[ -f /etc/debian_version ]]; then

@@ -12,6 +12,7 @@ declare -g SCRIPT_DIR
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 log info "SCRIPT_DIR=${SCRIPT_DIR}"
 
+install_dependencies
 fragment_function_names_sanity_check
 check_docker_daemon_for_sanity
 
