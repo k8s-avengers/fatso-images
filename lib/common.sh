@@ -6,11 +6,12 @@ declare -A log_emoji=(["debug"]="🐛" ["info"]="📗" ["warn"]="🚧" ["error"]
 function log() {
 	declare level="${1}"
 	shift
+	[[ "${level}" == "debug" && "${DEBUG}" != "yes" ]] && return # Skip debugs unless DEBUG=yes is set in the environment
 	declare color="${log_colors[${level}]}"
 	declare emoji="${log_emoji[${level}]}"
+	level=$(printf "%-5s" "${level}") # pad to 5 characters before printing
 	echo -e "${emoji} \033[${color}m${SECONDS}: [${level}] $*\033[0m" >&2
 }
-
 
 function install_dependencies() {
 	declare -a debian_pkgs=()
@@ -55,4 +56,32 @@ function check_docker_daemon_for_sanity() {
 		command docker "$@"
 	}
 
+}
+
+# How sad it is that one needs to write this function in 2024
+function is_element_in_array() {
+	declare element="$1"
+	shift
+	declare -a array=("$@")
+
+	if printf '%s\0' "${array[@]}" | grep -qwz "${element}"; then
+		log debug "Element '${element}' found in array."
+		return 0
+	else
+		log debug "Element '${element}' NOT found in array."
+		return 1
+	fi
+}
+
+# Also sad
+function array_join_elements_by {
+	local d=${1-} f=${2-}
+	if shift 2; then
+		printf %s "$f" "${@/#/$d}"
+	fi
+}
+
+function batcat() {
+	[[ "${BAT}" != "me" ]] && return 0
+	command batcat --color=always --paging=never "${@}"
 }

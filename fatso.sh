@@ -3,12 +3,16 @@
 set -e
 
 source lib/common.sh
+source lib/fragments.sh
+source lib/mkosi_helpers.sh
+source lib/script_builder.sh
 
 # Get the full directory path of this script
 declare -g SCRIPT_DIR
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 log info "SCRIPT_DIR=${SCRIPT_DIR}"
 
+fragment_function_names_sanity_check
 check_docker_daemon_for_sanity
 
 declare -g -r FLAVOR="${1:-"ubuntu-noble-baremetal-cloud-k8s-nvidia"}"
@@ -52,7 +56,7 @@ log info "BUILDER_CACHE_PKGS_ID=${BUILDER_CACHE_PKGS_ID}"
 
 ####################################################################################################################################################################################
 
-# Customization for the builder image.
+# Customization for the builder image. @TODO convert to interface/impl
 # If found in the root of the project, it will be used by copying it in place.
 declare -g -r BUILDER_EARLY_INIT_SCRIPT="${BUILDER_DIR}/early-init.docker.sh"
 if [[ -f "${SCRIPT_DIR}/early-init.docker.${BUILDER}.sh" ]]; then
@@ -97,10 +101,10 @@ fi
 declare -g -r CACHE_DIR_PKGS="cache/pkgs/${BUILDER_CACHE_PKGS_ID}"
 declare -g -r CACHE_DIR_INCREMENTAL="cache/incremental/${FLAVOR}"
 declare -g -r CACHE_DIR_WORKSPACE="cache/workspace/${FLAVOR}"
-mkdir -p "${CACHE_DIR_PKGS}" "${CACHE_DIR_INCREMENTAL}"
-log info "CACHE_DIR_PKGS=${CACHE_DIR_PKGS}"
-log info "CACHE_DIR_INCREMENTAL=${CACHE_DIR_INCREMENTAL}"
-log info "CACHE_DIR_WORKSPACE=${CACHE_DIR_WORKSPACE}"
+mkdir -p "${CACHE_DIR_PKGS}" "${CACHE_DIR_INCREMENTAL}" "${CACHE_DIR_WORKSPACE}"
+log debug "CACHE_DIR_PKGS=${CACHE_DIR_PKGS}"
+log debug "CACHE_DIR_INCREMENTAL=${CACHE_DIR_INCREMENTAL}"
+log debug "CACHE_DIR_WORKSPACE=${CACHE_DIR_WORKSPACE}"
 
 # Lets preprocess the flavor
 declare -g -r WORK_DIR="work/flavors/${FLAVOR}"
@@ -108,13 +112,46 @@ log info "Using WORK_DIR=${WORK_DIR}"
 rm -rf "${WORK_DIR}"
 mkdir -p "${WORK_DIR}"
 
-# For now just copy the sources...
-cp -r -v "${FLAVOR_DIR}"/* "${WORK_DIR}"/
-# ... and ensure any *.postinst files, if any, are executable
-find "${WORK_DIR}" -name "*.postinst" -exec chmod +x {} \;
-find "${WORK_DIR}" -name "*.postinst.chroot" -exec chmod +x {} \;
+# Enable the fragments declared by the flavor
+# @TODO allow command-line/env prepending and appending to this
+log info "Enabling fragments for flavor '${FLAVOR}'..."
+enable_fragments "${FLAVOR_FRAGMENTS[@]}"
+log info "Done enabling fragments for flavor '${FLAVOR}'..."
 
-# @TODO: template-process mkosi.conf & friends
+# make sure mkosi.conf exists, so crudini can do its work on it
+touch "${WORK_DIR}/mkosi.conf"
+
+run_fragment_implementations "config_mkosi_init"
+declare -g -a MKOSI_ROOTFS_PACKAGES=()
+declare -g -A MKOSI_ROOTFS_PACKAGES_ADDED_BY=()
+run_fragment_implementations "config_mkosi_pre"
+
+run_fragment_implementations "config_mkosi_post"
+
+log info "Done with configuration part"
+
+log info "Start scripting part with bash magic"
+
+# See https://github.com/systemd/mkosi/blob/main/mkosi/resources/mkosi.md#execution-flow
+# and https://github.com/systemd/mkosi/blob/main/mkosi/resources/mkosi.md#scripts
+# build_mkosi_script_from_fragments configure "mkosi.configure" # this doesn't work the same as others, expects stdout-json
+build_mkosi_script_from_fragments sync "mkosi.sync"
+build_mkosi_script_from_fragments prepare "mkosi.prepare" # runs twice, with 'final' and 'build' arguments; the latter is an overlay
+build_mkosi_script_from_fragments build "mkosi.build"
+build_mkosi_script_from_fragments postinst "mkosi.postinst"
+build_mkosi_script_from_fragments finalize "mkosi.finalize"
+
+log info "Done scripting part with bash magic"
+
+log info "Showing resulting WORK_DIR tree:"
+tree -h "${WORK_DIR}"
+
+if [[ "${STOP_BEFORE_BUILDING}" == "yes" ]]; then
+	log warn "STOP_BEFORE_BUILDING=yes, stopping."
+	batcat --language=ini "${WORK_DIR}/mkosi.conf"
+	log warn "STOP_BEFORE_BUILDING=yes, stopping."
+	exit 0
+fi
 
 # declare -g INCREMENTAL_CACHE_HASH=""
 # # Let's hash the final content (cat) of mkosi.conf, so we can use it as cache key for mkosi's incremental cache
@@ -157,7 +194,7 @@ log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
 
 # Prepare arrays with arguments for mkosi and docker invocation
 declare -a mkosi_opts=()
-if [[ "${DEBUG}" == "yes" ]]; then
+if [[ "${DEBUG_MKOSI}" == "yes" ]]; then
 	mkosi_opts+=("--debug")
 fi
 mkosi_opts+=("--output-dir=/out")                   # mapped below
@@ -189,23 +226,25 @@ docker_opts+=("${BUILDER_IMAGE_REF}")
 declare real_cmd="/usr/local/bin/mkosi ${mkosi_opts[*]} build"
 log info "Real mkosi invocation: ${real_cmd}"
 
-docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && ls -laR && ls -la mkosi.conf && ${real_cmd}") # possible escaping hell here
+docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && ${real_cmd}") # possible escaping hell here
 
 # @TODO: allow further customization of the mkosi command line
 
-# Run the docker command
-log info "Running docker with: ${docker_opts[*]}"
+# Run the docker command, and thus, mkosi
+log info "Running mkosi under Docker..."
+log debug "Running docker with: ${docker_opts[*]}"
 docker "${docker_opts[@]}"
 
-log info "Done building mkosi! ${FLAVOR}"
+log info "Done building using mkosi! ${FLAVOR}"
 
 ####################################################################################################################################################################################
 # Compress the image from OUTPUT_IMAGE_FILE_RAW to DIST_FILE_IMG_RAW_GZ, using pigz
-declare -i size_orig size_compress
-size_orig=$(stat -c %s "${OUTPUT_IMAGE_FILE_RAW}")
+declare size_orig_human size_compress_human
+# get a human representation of the size, use "du -h"
+size_orig_human=$(du --si "${OUTPUT_IMAGE_FILE_RAW}" | cut -f 1)
 log info "Compressing image to ${DIST_FILE_IMG_RAW_GZ}"
 pigz -1 -c "${OUTPUT_IMAGE_FILE_RAW}" > "${DIST_FILE_IMG_RAW_GZ}"
-size_compress=$(stat -c %s "${DIST_FILE_IMG_RAW_GZ}")
-log info "Done compressing image to ${DIST_FILE_IMG_RAW_GZ} from ${size_orig} to ${size_compress} bytes."
+size_compress_human=$(du --si "${DIST_FILE_IMG_RAW_GZ}" | cut -f 1)
+log info "Done compressing image to ${DIST_FILE_IMG_RAW_GZ} from ${size_orig_human} to ${size_compress_human}."
 
 log info "Distribution done."
