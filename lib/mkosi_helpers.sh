@@ -25,7 +25,7 @@ function mkosi_conf_config_value() {
 	shift
 	declare param="$1"
 	shift
-	crudini --ini-options=nospace --set "${WORK_DIR}/mkosi.conf" "${section}" "${param}" "${@}"
+	crudini --set "${WORK_DIR}/mkosi.conf" "${section}" "${param}" "${@}" # --ini-options=nospace  requires newer crudini
 	return 0
 }
 
