@@ -244,7 +244,7 @@ docker_opts+=("${BUILDER_IMAGE_REF}")
 declare real_cmd="/usr/local/bin/mkosi ${mkosi_opts[*]} build"
 log info "Real mkosi invocation: ${real_cmd}"
 
-docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && bash pre_mkosi.sh && ${real_cmd} && bash post_mkosi.sh") # possible escaping hell here
+docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && bash pre_mkosi.sh && chown ${UID} -R . && ${real_cmd} && bash post_mkosi.sh && chown ${UID} -R .") # possible escaping hell here
 
 # @TODO: allow further customization of the mkosi command line
 
