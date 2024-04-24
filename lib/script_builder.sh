@@ -52,7 +52,7 @@ function create_mkosi_script_from_fragments_specific() {
 	for one_frag_file in "${handled_fragments[@]}"; do
 		log info "Enabling fragment: ${one_frag_file} (from ${frag_var})"
 		cat <<- EOD >> "${full_fn}"
-			log info "fatso: starting '${script_filename}'; including fragment '${one_frag_file}'..."
+			log debug "fatso: starting '${script_filename}'; including fragment '${one_frag_file}'..."
 			$(cat "fragments/${one_frag_file}.sh")
 		EOD
 	done
