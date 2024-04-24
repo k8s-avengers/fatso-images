@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # logger utility, output ANSI-colored messages to stderr; first argument is level (debug/info/warn/error), all other arguments are the message.
-declare -A log_colors=(["debug"]="0;36" ["info"]="0;32" ["warn"]="0;33" ["error"]="0;31")
-declare -A log_emoji=(["debug"]="🐛" ["info"]="📗" ["warn"]="🚧" ["error"]="🚨")
+declare -A log_colors=(["debug"]="0;36" ["info"]="0;32" ["korok"]="1;32" ["warn"]="0;33" ["error"]="0;31")
+declare -A log_emoji=(["debug"]="🐛" ["info"]="🌿" ["korok"]="🌱" ["warn"]="🚸" ["error"]="🚨")
 function log() {
 	declare level="${1}"
 	shift

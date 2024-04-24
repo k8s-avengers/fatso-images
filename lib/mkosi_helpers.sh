@@ -1,21 +1,5 @@
 #!/usr/bin/env bash
 
-function mkosi_config_add_rootfs_packages() {
-	declare -g -a MKOSI_ROOTFS_PACKAGES          # outer scope
-	declare -g -A MKOSI_ROOTFS_PACKAGES_ADDED_BY # outer scope
-	declare pkgs=("$@")
-	declare pkg
-	for pkg in "${pkgs[@]}"; do
-		log debug "Adding package to rootfs: ${pkg}"
-		if ! is_element_in_array "${pkg}" "${MKOSI_ROOTFS_PACKAGES[@]}"; then
-			log debug "[${CURRENT_IMPLEMENTATION}] Adding new package to rootfs: ${pkg}"
-			MKOSI_ROOTFS_PACKAGES+=("${pkg}")
-			MKOSI_ROOTFS_PACKAGES_ADDED_BY["${pkg}"]="${CURRENT_IMPLEMENTATION}"
-		else
-			log warn "[${CURRENT_IMPLEMENTATION}] Package already in rootfs: ${pkg} (added by '${MKOSI_ROOTFS_PACKAGES_ADDED_BY["${pkg}"]}')"
-		fi
-	done
-}
 
 function mkosi_conf_config_value() {
 	# use crudini to manipulate mkosi.conf in the working directory

@@ -62,48 +62,6 @@ log info "BUILDER_CACHE_PKGS_ID=${BUILDER_CACHE_PKGS_ID}"
 FLAVOR_FRAGMENTS+=("${@}")
 # Make it read-only from now
 declare -g -a -r FLAVOR_FRAGMENTS
-####################################################################################################################################################################################
-
-# Customization for the builder image. @TODO convert to interface/impl
-# If found in the root of the project, it will be used by copying it in place.
-declare -g -r BUILDER_EARLY_INIT_SCRIPT="${BUILDER_DIR}/early-init.docker.sh"
-if [[ -f "${SCRIPT_DIR}/early-init.docker.${BUILDER}.sh" ]]; then
-	log info "Customizing builder image with early-init.docker.${BUILDER}.sh"
-	cp -v "${SCRIPT_DIR}/early-init.docker.${BUILDER}.sh" "${BUILDER_EARLY_INIT_SCRIPT}"
-elif [[ -f "${SCRIPT_DIR}/early-init.docker.sh" ]]; then
-	log info "Customizing builder image with early-init.docker.sh"
-	cp -v "${SCRIPT_DIR}/early-init.docker.sh" "${BUILDER_EARLY_INIT_SCRIPT}"
-else
-	log info "No custom early-init.docker.sh found, using a no-op default."
-	cat <<- DEFAULT_NO_OP > "${BUILDER_EARLY_INIT_SCRIPT}"
-		#!/usr/bin/env bash
-		echo "No-op early-init.docker.sh, create one in the root of the project to customize the builder image." >&2
-		exit 0
-	DEFAULT_NO_OP
-fi
-
-# Let's hash the builder's Dockerfile plus a few variables
-declare -g BUILDER_HASH=""
-BUILDER_HASH="$(cat "${BUILDER_DIR}/Dockerfile" "${BUILDER_CONF}" "${BUILDER_EARLY_INIT_SCRIPT}" | sha256sum - | cut -d ' ' -f 1)"
-declare -g -r BUILDER_HASH="${BUILDER_HASH:0:8}" # shorten it to 8 characters, make readonly
-log info "BUILDER_HASH=${BUILDER_HASH}"
-
-declare -g -r BUILDER_IMAGE_REF="fatso-builder-${BUILDER}:${BUILDER_HASH}"
-
-# Check if Docker local store has this image name BUILDER_IMAGE_REF, if not, build it.
-# If the image is in the local docker cache, skip building
-if [[ -n "$(docker images -q "${BUILDER_IMAGE_REF}")" ]]; then
-	log info "Builder image '${BUILDER_IMAGE_REF}' already present, skip building."
-else
-	log warn "Builder image ${BUILDER_IMAGE_REF} not found, building..."
-	(
-		cd "${BUILDER_DIR}" || { log error "crazy about ${BUILDER_DIR}" && exit 1; }
-		docker buildx build --progress=plain --load -t "${BUILDER_IMAGE_REF}" .
-	)
-	log info "Build done for ${BUILDER_IMAGE_REF}"
-fi
-
-####################################################################################################################################################################################
 
 # Prepare cache dirs
 declare -g -r CACHE_DIR_PKGS="cache/pkgs/${BUILDER_CACHE_PKGS_ID}"
@@ -116,26 +74,34 @@ log debug "CACHE_DIR_INCREMENTAL=${CACHE_DIR_INCREMENTAL}"
 log debug "CACHE_DIR_WORKSPACE=${CACHE_DIR_WORKSPACE}"
 log debug "CACHE_DIR_EXTRA=${CACHE_DIR_EXTRA}"
 
-# Lets preprocess the flavor
+# Prepare WORK_DIR; this is gonna be /work in the Docker container
 declare -g -r WORK_DIR="work/flavors/${FLAVOR}"
 log info "Using WORK_DIR=${WORK_DIR}"
 rm -rf "${WORK_DIR}"
 mkdir -p "${WORK_DIR}"
 
-# Enable the fragments declared by the flavor
-# @TODO allow command-line/env prepending and appending to this
+##### Generate configuration and scripts for mkosi
+# Enable the fragments declared by the flavor + command line
 log info "Enabling fragments for flavor '${FLAVOR}'..."
-enable_fragments "${FLAVOR_FRAGMENTS[@]}" # this adds extra fragments from the command line
+enable_fragments "${FLAVOR_FRAGMENTS[@]}" # enables _all_ fragments
 log info "Done enabling fragments for flavor '${FLAVOR}'..."
 
 # make sure mkosi.conf exists, so crudini can do its work on it
 touch "${WORK_DIR}/mkosi.conf"
 
+# Some shared-state variables, to control which fragments will be included into the builder scripts.
+# This is done so changes to an unrelated fragment don't compromise the builder's Docker cache hit ratio.
+# Fragments can add themselves to those arrays using their config functions.
+declare -g -a BUILDER_FRAGMENTS_EARLY=() BUILDER_FRAGMENTS_LATE=()
+
+# Initialize variables; very basic initial configuration
+# These can define their own shared-state (...global) variables
 run_fragment_implementations "config_mkosi_init"
-declare -g -a MKOSI_ROOTFS_PACKAGES=()
-declare -g -A MKOSI_ROOTFS_PACKAGES_ADDED_BY=()
+
+# Main configuration part; change variables;
 run_fragment_implementations "config_mkosi_pre"
 
+# Final configuration; render variables to scripts/configuration; make them read-only
 run_fragment_implementations "config_mkosi_post"
 
 log info "Done with configuration part"
@@ -156,6 +122,14 @@ build_mkosi_script_from_fragments finalize "mkosi.finalize"
 # They will be explicitly called before & after mkosi invocation, below
 always="yes" include_chroot="no" build_mkosi_script_from_fragments pre_mkosi "pre_mkosi.sh"
 always="yes" include_chroot="no" build_mkosi_script_from_fragments post_mkosi "post_mkosi.sh"
+# same, but run the context of the builder Dockerfile; beware too many changes
+always="yes" include_chroot="no" build_mkosi_script_from_fragments builder_dockerfile_early "builder_dockerfile_early.sh"
+always="yes" include_chroot="no" build_mkosi_script_from_fragments builder_dockerfile_late "builder_dockerfile_late.sh"
+
+
+always="yes" create_mkosi_script_from_fragments_specific "pre_mkosi_host" "pre_mkosi.sh"
+
+
 
 log info "Done scripting part with bash magic"
 
@@ -206,7 +180,31 @@ declare -g -r DIST_FILE_IMG_RAW_GZ="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.img.
 log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
 
 ####################################################################################################################################################################################
-# Actually build
+# Actually build; first build the builder Docker image, then use it to run mkosi
+
+log info "Preparing builder..."
+####################################################################################################################################################################################
+# Customization for the builder image
+# If found in the root of the project, it will be used by copying it in place.
+declare -g -r BUILDER_EARLY_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_early.sh"
+declare -g -r BUILDER_LATE_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_late.sh"
+
+# move from the root of the project to the builder dir
+mv -v "${WORK_DIR}/builder_dockerfile_early.sh" "${BUILDER_EARLY_INIT_SCRIPT}"
+mv -v "${WORK_DIR}/builder_dockerfile_late.sh" "${BUILDER_LATE_INIT_SCRIPT}"
+
+declare -g -r BUILDER_IMAGE_REF="fatso-builder-${BUILDER}:local"
+
+log info "Building builder image '${BUILDER_IMAGE_REF}'"
+(
+	cd "${BUILDER_DIR}" || { log error "crazy about ${BUILDER_DIR}" && exit 1; }
+	docker buildx build --progress=plain --load -t "${BUILDER_IMAGE_REF}" .
+)
+log info "Build done for builder ${BUILDER_IMAGE_REF}"
+####################################################################################################################################################################################
+
+####################################################################################################################################################################################
+# Actually use the builder to build
 
 # Prepare arrays with arguments for mkosi and docker invocation
 declare -a mkosi_opts=()

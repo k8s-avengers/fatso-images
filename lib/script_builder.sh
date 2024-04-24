@@ -4,9 +4,7 @@ function build_mkosi_script_from_fragments() {
 	declare interface="$1"
 	declare script_filename="$2"
 	create_mkosi_script_from_fragments_specific "${interface}_host" "${script_filename}"
-	if [[ "${include_chroot:-"yes"}" == "yes" ]]; then
-		create_mkosi_script_from_fragments_specific "${interface}_chroot" "${script_filename}.chroot"
-	fi
+	create_mkosi_script_from_fragments_specific "${interface}_chroot" "${script_filename}.chroot"
 }
 
 function create_mkosi_script_from_fragments_specific() {
@@ -47,19 +45,10 @@ function create_mkosi_script_from_fragments_specific() {
 	# include the source of all enabled fragments
 	declare one_frag_file
 	for one_frag_file in "${FLAVOR_FRAGMENTS[@]}"; do
-		log info "Enabling fragment: ${fragment}"
-		# sugar: allow for fragments to be enabled without the .sh extension
-		if [[ ! -f "fragments/${one_frag_file}" ]]; then
-			one_frag_file="${one_frag_file}.sh"
-		fi
-		# check file actually exists before sourcing
-		if [[ ! -f "fragments/${one_frag_file}" ]]; then
-			log error "Can't find fragment '${one_frag_file}'"
-			exit 3
-		fi
+		log info "Enabling fragment: ${one_frag_file}"
 		cat <<- EOD >> "${full_fn}"
-			log debug "fatso: starting '${script_filename}'; including fragment '${one_frag_file}'..."
-			$(cat "fragments/$one_frag_file")
+			log info "fatso: starting '${script_filename}'; including fragment '${one_frag_file}'..."
+			$(cat "fragments/${one_frag_file}.sh")
 		EOD
 	done
 

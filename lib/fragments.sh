@@ -4,17 +4,13 @@ function enable_fragments() {
 	declare fragment
 	for fragment in "${@}"; do
 		log info "Enabling fragment: ${fragment}"
-		# sugar: allow for fragments to be enabled without the .sh extension
-		if [[ ! -f "fragments/${fragment}" ]]; then
-			fragment="${fragment}.sh"
-		fi
 		# check file actually exists before sourcing
-		if [[ ! -f "fragments/${fragment}" ]]; then
-			log error "Can't find fragment '${fragment}'"
+		if [[ ! -f "fragments/${fragment}.sh" ]]; then
+			log error "Can't find fragment '${fragment}' - should be in 'fragments/${fragment}.sh'"
 			exit 3
 		fi
-		# shellcheck disable=SC1090
-		source "fragments/${fragment}"
+		# shellcheck disable=SC1090 # yeah a dynamic source; we should gen a fake all-sourced .sh for shellcheck
+		source "fragments/${fragment}.sh"
 	done
 }
 
@@ -95,8 +91,8 @@ function fragment_function_names_sanity_check() {
 	# count the unique functions
 	# if !=, then we have a problem (copy/paste much?)
 	declare -i total_functions=0 unique_functions=0
-	total_functions=$(find fragments lib builders flavors -name '*.sh' -print0 | xargs -0 grep --no-filename "function" | grep "::" | sort | wc -l)
-	unique_functions=$(find fragments lib builders flavors -name '*.sh' -print0 | xargs -0 grep --no-filename "function" | grep "::" | sort | uniq | wc -l)
+	total_functions=$(find fragments lib flavors -name '*.sh' -print0 | xargs -0 grep --no-filename "function" | grep "::" | sort | wc -l)
+	unique_functions=$(find fragments lib flavors -name '*.sh' -print0 | xargs -0 grep --no-filename "function" | grep "::" | sort | uniq | wc -l)
 	# Ensure both are higher than one
 	if [[ ${total_functions} -lt 1 ]]; then
 		log error "Found ${total_functions} functions with '::' in their name. This is a problem."

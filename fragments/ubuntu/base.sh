@@ -122,3 +122,21 @@ function mkosi_script_finalize_chroot::980_ubuntu_late_fixes() {
 	log info "package installed sizes, at finalize stage..."
 	dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n
 }
+
+# NOT an implementation, just regular function; used by other fragments!
+function mkosi_config_add_rootfs_packages() {
+	declare -g -a MKOSI_ROOTFS_PACKAGES          # outer scope
+	declare -g -A MKOSI_ROOTFS_PACKAGES_ADDED_BY # outer scope
+	declare pkgs=("$@")
+	declare pkg
+	for pkg in "${pkgs[@]}"; do
+		log debug "Adding package to rootfs: ${pkg}"
+		if ! is_element_in_array "${pkg}" "${MKOSI_ROOTFS_PACKAGES[@]}"; then
+			log debug "[${CURRENT_IMPLEMENTATION}] Adding new package to rootfs: ${pkg}"
+			MKOSI_ROOTFS_PACKAGES+=("${pkg}")
+			MKOSI_ROOTFS_PACKAGES_ADDED_BY["${pkg}"]="${CURRENT_IMPLEMENTATION}"
+		else
+			log warn "[${CURRENT_IMPLEMENTATION}] Package already in rootfs: ${pkg} (added by '${MKOSI_ROOTFS_PACKAGES_ADDED_BY["${pkg}"]}')"
+		fi
+	done
+}
