@@ -109,10 +109,12 @@ fi
 declare -g -r CACHE_DIR_PKGS="cache/pkgs/${BUILDER_CACHE_PKGS_ID}"
 declare -g -r CACHE_DIR_INCREMENTAL="cache/incremental/${FLAVOR}"
 declare -g -r CACHE_DIR_WORKSPACE="cache/workspace/${FLAVOR}"
-mkdir -p "${CACHE_DIR_PKGS}" "${CACHE_DIR_INCREMENTAL}" "${CACHE_DIR_WORKSPACE}"
+declare -g -r CACHE_DIR_EXTRA="cache/extra/${FLAVOR}"
+mkdir -p "${CACHE_DIR_PKGS}" "${CACHE_DIR_INCREMENTAL}" "${CACHE_DIR_WORKSPACE}" "${CACHE_DIR_EXTRA}"
 log debug "CACHE_DIR_PKGS=${CACHE_DIR_PKGS}"
 log debug "CACHE_DIR_INCREMENTAL=${CACHE_DIR_INCREMENTAL}"
 log debug "CACHE_DIR_WORKSPACE=${CACHE_DIR_WORKSPACE}"
+log debug "CACHE_DIR_EXTRA=${CACHE_DIR_EXTRA}"
 
 # Lets preprocess the flavor
 declare -g -r WORK_DIR="work/flavors/${FLAVOR}"
@@ -216,6 +218,7 @@ mkosi_opts+=("--cache-dir=/cache/incremental")      # mapped below
 mkosi_opts+=("--incremental")                       # mapped below
 mkosi_opts+=("--package-cache-dir=/cache/packages") # mapped below
 mkosi_opts+=("--workspace-dir=/cache/workspace")    # mapped below
+# Attention: /cache/extra is available, but not mapped to mkosi; use it for pre/post scripts only
 
 # if http_proxy is set, pass it to mkosi via --proxy-url
 if [[ -n "${http_proxy}" ]]; then
@@ -234,6 +237,7 @@ docker_opts+=("-v" "${SCRIPT_DIR}/${OUTPUT_DIR}:/out")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_INCREMENTAL}:/cache/incremental")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_WORKSPACE}:/cache/workspace")
+docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_EXTRA}:/cache/extra")
 docker_opts+=("${BUILDER_IMAGE_REF}")
 
 # Important: command _after_ the options

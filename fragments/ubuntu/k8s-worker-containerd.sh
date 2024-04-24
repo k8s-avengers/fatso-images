@@ -1,33 +1,40 @@
 #!/usr/bin/env bash
 
-# @TODO: this needs a major rethink; we should have scripts that run inside Docker, but before mkosi, that prepares the .deb
-#        and passes it via
-#        BuildSources=../my-packages:my-packages-in-sandbox
-#        Packages=my-packages-in-sandbox/abc.rpm
-# For now, it will re-download the .deb everytime image is built :-|
-
-function mkosi_script_postinst_chroot::400_k8s_worker_containerd_install() {
-	#### k8s stuff
-	## containerd; using a prebuilt deb with many necessary tools in k8s-worker-containerd
-	# @TODO slim down a copy of this (no cfssl needed, etc)
+# This runs outside of mkosi, but inside the Docker container.
+function mkosi_script_pre_mkosi_host::k8s_worker_containerd_download() {
+	log info "Downloading k8s-worker-containerd package..." # @TODO slim down a copy of this (no cfssl needed, etc) - its huge
 
 	declare latest_release_version
 	latest_release_version=$(curl -sL "https://api.github.com/repos/armsurvivors/k8s-worker-containerd/releases/latest" | jq -r '.tag_name')
 
+	log info "Downloading k8s-worker-containerd package of version '${latest_release_version}'..."
+
 	declare deb_file down_url down_dir full_deb_path
 	deb_file="k8s-worker-containerd_amd64_noble.deb"
 	down_url="https://github.com/armsurvivors/k8s-worker-containerd/releases/latest/download/${deb_file}"
-	down_dir="/root/k8s-worker-containerd"
+	down_dir="/cache/extra"
 	mkdir -p "${down_dir}"
 	full_deb_path="${down_dir}/${latest_release_version}_${deb_file}"
 
-	echo "Will download ${full_deb_path} from latest release..."
-	wget --progress=dot:mega --local-encoding=UTF-8 --output-document="${full_deb_path}.tmp" "${down_url}"
-	mv -v "${full_deb_path}.tmp" "${full_deb_path}"
+	if [[ -f "${full_deb_path}" ]]; then
+		log info "Package already downloaded: ${full_deb_path}"
+	else
+		log info "Will download ${full_deb_path} from latest release..."
+		wget --progress=dot:mega --local-encoding=UTF-8 --output-document="${full_deb_path}.tmp" "${down_url}"
+		mv -v "${full_deb_path}.tmp" "${full_deb_path}"
+	fi
 
-	apt -y install "${full_deb_path}"
-	rm -v "/${full_deb_path}"
+	# Add the package to the mkosi extra-packages directory, so it can be found by mkosi
+	# Do NOT include the version, so it can always be referred to by the same name
+	# Those functions run in very different contexts, so we can't just pass the path around.
+	cp -v "${full_deb_path}" "extra-packages/${deb_file}"
+}
 
+function config_mkosi_pre::k8s_worker_containerd_package() {
+	mkosi_config_add_rootfs_packages "./extra-packages/k8s-worker-containerd_amd64_noble.deb"
+}
+
+function mkosi_script_postinst_chroot::400_k8s_worker_containerd_install() {
 	# Check by running it under chroot
 	containerd --version
 
