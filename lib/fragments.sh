@@ -22,13 +22,13 @@ function find_fragment_functions() {
 	declare intf_marker="${interface}::"
 	# shellcheck disable=SC2207 # Split it, man.
 	matching_raw_functions+=($(compgen -A function | grep "^${intf_marker}" || true)) # compgen enables bash "metaprogramming" lol
-	log info "Found ${#matching_raw_functions[@]} functions for interface '${interface}': ${matching_raw_functions[*]}"
+	log debug "Found ${#matching_raw_functions[@]} functions for interface '${interface}': ${matching_raw_functions[*]}"
 	declare -a implementations=()
 	declare one_impl
 	for one_impl in "${matching_raw_functions[@]}"; do
 		implementations+=("${one_impl#${intf_marker}}")
 	done
-	log info "Found ${#implementations[@]} implementations for interface '${interface}': ${implementations[*]}"
+	log debug "Found ${#implementations[@]} implementations for interface '${interface}': ${implementations[*]}"
 
 	# bash really does not lend itself to this. bear with me
 	declare -A impl_to_order_map=() order_to_impl_map=()
@@ -80,10 +80,10 @@ function run_fragment_implementations() {
 	find_fragment_functions "${interface}"
 	declare one_impl
 	for one_impl in "${fragment_implementations[@]}"; do
-		log info "Running implementation '${one_impl}' for interface '${interface}'..."
+		log info "Invoking implementation '${one_impl}' for interface '${interface}'..."
 		CURRENT_INTERFACE="${interface}" CURRENT_IMPLEMENTATION="${one_impl}" "${interface}::${one_impl}" "$@"
 	done
-	log info "All implementations for interface '${interface}' ran."
+	log debug "All implementations for interface '${interface}' ran."
 }
 
 function fragment_function_names_sanity_check() {
@@ -99,7 +99,9 @@ function fragment_function_names_sanity_check() {
 		exit 1
 	fi
 	if [[ ${total_functions} -ne ${unique_functions} ]]; then
+		# show the duplicates
 		log error "Found ${total_functions} functions with '::' in their name, but only ${unique_functions} unique ones. This is a problem."
+		log error "Investigate: '$(find fragments lib flavors -name '*.sh' -print0 | xargs -0 grep --no-filename "function" | grep "::" | sort | uniq -d | xargs echo -n)'"
 		exit 1
 	fi
 	log info "Found ${total_functions} functions with '::' in their name, all unique."

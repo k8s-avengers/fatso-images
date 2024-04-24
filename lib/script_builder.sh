@@ -11,6 +11,8 @@ function create_mkosi_script_from_fragments_specific() {
 	declare interface="mkosi_script_${1}"
 	declare script_filename="${2}"
 	declare full_fn="${2}"
+	declare script_basename
+	script_basename="$(basename "${script_filename}")"
 
 	# obtain all matching implementations for the interface
 	declare -a fragment_implementations=()
@@ -32,12 +34,12 @@ function create_mkosi_script_from_fragments_specific() {
 		# <common.sh>
 		$(cat "lib/common.sh")
 		# </common.sh>
-		log info "fatso: starting '${script_filename}' (all ${#fragment_implementations[@]} '${interface}' methods)..."
+		log info "fatso: starting '${script_basename}' (all ${#fragment_implementations[@]} '${interface}' methods)..."
 	EOD
 
 	if [[ "${DEBUG}" == "yes" ]]; then
 		cat <<- EOD >> "${full_fn}"
-			log info "fatso: DEBUG ENV '${script_filename}' (all ${#fragment_implementations[@]} '${interface}' methods)..."
+			log info "fatso: DEBUG ENV '${script_basename}' (all ${#fragment_implementations[@]} '${interface}' methods)..."
 			env | sort
 		EOD
 	fi
@@ -50,9 +52,9 @@ function create_mkosi_script_from_fragments_specific() {
 	eval "handled_fragments+=(\"\${${frag_var}[@]}\")" # ewww
 
 	for one_frag_file in "${handled_fragments[@]}"; do
-		log info "Enabling fragment: ${one_frag_file} (from ${frag_var})"
+		log info "Including fragment '${one_frag_file}' into '${script_basename}' (via ${frag_var})"
 		cat <<- EOD >> "${full_fn}"
-			log debug "fatso: starting '${script_filename}'; including fragment '${one_frag_file}'..."
+			log debug "fatso: starting '${script_basename}'; included fragment '${one_frag_file}'..."
 			$(cat "fragments/${one_frag_file}.sh")
 		EOD
 	done
@@ -61,7 +63,7 @@ function create_mkosi_script_from_fragments_specific() {
 	declare -i counter=0
 	for one_impl in "${fragment_implementations[@]}"; do
 		counter=$((counter + 1))
-		log debug "including call to implementation '${one_impl}' for interface '${interface}' into '${script_filename}'..."
+		log debug "including call to implementation '${one_impl}' for interface '${interface}' into '${script_basename}'..."
 		cat <<- EOD >> "${full_fn}"
 			log info "fatso: calling '${interface}::${one_impl}' as part of '${script_filename}' (${counter}/${#fragment_implementations[@]} )..."
 			${interface}::${one_impl} "\${@}"
@@ -70,7 +72,7 @@ function create_mkosi_script_from_fragments_specific() {
 
 	# bash footer; won't run if functions fail or exit etc
 	cat <<- EOD >> "${full_fn}"
-		log info "fatso: finished '${script_filename}' (all ${#fragment_implementations[@]} '${interface}' methods)..."
+		log info "fatso: finished '${script_basename}' (all ${#fragment_implementations[@]} '${interface}' methods)..."
 	EOD
 
 	chmod +x "${full_fn}"
