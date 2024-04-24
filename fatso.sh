@@ -123,8 +123,8 @@ declare -g -r BUILDER_EARLY_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_early
 declare -g -r BUILDER_LATE_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_late.sh"
 
 # run in the context of the builder Dockerfile
-always="yes" create_mkosi_script_from_fragments_specific "builder_dockerfile_early_host" "${BUILDER_EARLY_INIT_SCRIPT}"
-always="yes" create_mkosi_script_from_fragments_specific "builder_dockerfile_late_host" "${BUILDER_LATE_INIT_SCRIPT}"
+frag_var="BUILDER_FRAGMENTS_EARLY" always="yes" create_mkosi_script_from_fragments_specific "builder_dockerfile_early_host" "${BUILDER_EARLY_INIT_SCRIPT}"
+frag_var="BUILDER_FRAGMENTS_LATE" always="yes" create_mkosi_script_from_fragments_specific "builder_dockerfile_late_host" "${BUILDER_LATE_INIT_SCRIPT}"
 
 # those are not really for mkosi, but before/after helpers that will run inside the Docker container
 # can be used to twist the image in ways mkosi can't, like pre-downloading things, or post-processing (eg convert to qcow2/vhdx/etc)

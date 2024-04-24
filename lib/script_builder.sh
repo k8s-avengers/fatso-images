@@ -42,10 +42,15 @@ function create_mkosi_script_from_fragments_specific() {
 		EOD
 	fi
 
-	# include the source of all enabled fragments
+	# include the source of all enabled fragments; frag_var defaults to FLAVOR_FRAGMENTS, but can be overriden
 	declare one_frag_file
-	for one_frag_file in "${FLAVOR_FRAGMENTS[@]}"; do
-		log info "Enabling fragment: ${one_frag_file}"
+	declare frag_var="${frag_var:-"FLAVOR_FRAGMENTS"}"
+	log debug "fragment variable: ${frag_var}"
+	declare -a handled_fragments=()
+	eval "handled_fragments+=(\"\${${frag_var}[@]}\")" # ewww
+
+	for one_frag_file in "${handled_fragments[@]}"; do
+		log info "Enabling fragment: ${one_frag_file} (from ${frag_var})"
 		cat <<- EOD >> "${full_fn}"
 			log info "fatso: starting '${script_filename}'; including fragment '${one_frag_file}'..."
 			$(cat "fragments/${one_frag_file}.sh")
