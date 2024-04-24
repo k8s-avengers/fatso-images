@@ -117,19 +117,20 @@ build_mkosi_script_from_fragments build "mkosi.build"
 build_mkosi_script_from_fragments postinst "mkosi.postinst"
 build_mkosi_script_from_fragments finalize "mkosi.finalize"
 
+####################################################################################################################################################################################
+# Customization for the builder image
+declare -g -r BUILDER_EARLY_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_early.sh"
+declare -g -r BUILDER_LATE_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_late.sh"
+
+# run in the context of the builder Dockerfile
+always="yes" create_mkosi_script_from_fragments_specific "builder_dockerfile_early_host" "${BUILDER_EARLY_INIT_SCRIPT}"
+always="yes" create_mkosi_script_from_fragments_specific "builder_dockerfile_late_host" "${BUILDER_LATE_INIT_SCRIPT}"
+
 # those are not really for mkosi, but before/after helpers that will run inside the Docker container
 # can be used to twist the image in ways mkosi can't, like pre-downloading things, or post-processing (eg convert to qcow2/vhdx/etc)
 # They will be explicitly called before & after mkosi invocation, below
-always="yes" include_chroot="no" build_mkosi_script_from_fragments pre_mkosi "pre_mkosi.sh"
-always="yes" include_chroot="no" build_mkosi_script_from_fragments post_mkosi "post_mkosi.sh"
-# same, but run the context of the builder Dockerfile; beware too many changes
-always="yes" include_chroot="no" build_mkosi_script_from_fragments builder_dockerfile_early "builder_dockerfile_early.sh"
-always="yes" include_chroot="no" build_mkosi_script_from_fragments builder_dockerfile_late "builder_dockerfile_late.sh"
-
-
-always="yes" create_mkosi_script_from_fragments_specific "pre_mkosi_host" "pre_mkosi.sh"
-
-
+always="yes" create_mkosi_script_from_fragments_specific "pre_mkosi_host" "${WORK_DIR}/pre_mkosi.sh"
+always="yes" create_mkosi_script_from_fragments_specific "post_mkosi_host" "${WORK_DIR}/post_mkosi.sh"
 
 log info "Done scripting part with bash magic"
 
@@ -142,11 +143,6 @@ if [[ "${STOP_BEFORE_BUILDING}" == "yes" ]]; then
 	log warn "STOP_BEFORE_BUILDING=yes, stopping."
 	exit 0
 fi
-
-# declare -g INCREMENTAL_CACHE_HASH=""
-# # Let's hash the final content (cat) of mkosi.conf, so we can use it as cache key for mkosi's incremental cache
-# INCREMENTAL_CACHE_HASH="$(cat "${WORK_DIR}/mkosi.conf" | sha256sum - | cut -d ' ' -f 1)"
-# log info "INCREMENTAL_CACHE_HASH=${INCREMENTAL_CACHE_HASH}"
 
 ####################################################################################################################################################################################
 # Version calc, for GHA's benefit
@@ -183,15 +179,6 @@ log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
 # Actually build; first build the builder Docker image, then use it to run mkosi
 
 log info "Preparing builder..."
-####################################################################################################################################################################################
-# Customization for the builder image
-# If found in the root of the project, it will be used by copying it in place.
-declare -g -r BUILDER_EARLY_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_early.sh"
-declare -g -r BUILDER_LATE_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_late.sh"
-
-# move from the root of the project to the builder dir
-mv -v "${WORK_DIR}/builder_dockerfile_early.sh" "${BUILDER_EARLY_INIT_SCRIPT}"
-mv -v "${WORK_DIR}/builder_dockerfile_late.sh" "${BUILDER_LATE_INIT_SCRIPT}"
 
 declare -g -r BUILDER_IMAGE_REF="fatso-builder-${BUILDER}:local"
 

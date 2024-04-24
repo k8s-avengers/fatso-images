@@ -3,14 +3,14 @@
 function build_mkosi_script_from_fragments() {
 	declare interface="$1"
 	declare script_filename="$2"
-	create_mkosi_script_from_fragments_specific "${interface}_host" "${script_filename}"
-	create_mkosi_script_from_fragments_specific "${interface}_chroot" "${script_filename}.chroot"
+	create_mkosi_script_from_fragments_specific "${interface}_host" "${WORK_DIR}/${script_filename}"
+	create_mkosi_script_from_fragments_specific "${interface}_chroot" "${WORK_DIR}/${script_filename}.chroot"
 }
 
 function create_mkosi_script_from_fragments_specific() {
 	declare interface="mkosi_script_${1}"
 	declare script_filename="${2}"
-	declare full_fn="${WORK_DIR}/${script_filename}"
+	declare full_fn="${2}"
 
 	# obtain all matching implementations for the interface
 	declare -a fragment_implementations=()
