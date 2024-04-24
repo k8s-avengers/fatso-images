@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# @TODO: this needs splitting between an 'apt/base' fragment and 'ubuntu/base', so 'debian/base' can exist too
+
 function config_mkosi_pre::000_ubuntu_base() {
 
 	declare -a pkgs=(

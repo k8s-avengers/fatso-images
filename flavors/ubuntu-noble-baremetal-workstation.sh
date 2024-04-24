@@ -12,9 +12,8 @@ declare -g -a FLAVOR_FRAGMENTS=(
 	"ubuntu/ssh"
 	"ubuntu/grub"
 	"ubuntu/baremetal"
-	"ubuntu/cloud"
-	"ubuntu/k8s-worker-containerd"
-	"ubuntu/k8s"
-	#"ubuntu/k3s" # maybe just for workstation flavor, no server wants this crap
+	"ubuntu/k3s"
 	"ubuntu/nvidia"
+	"ubuntu/networkmanager"
+	"ubuntu/wifi"
 )
