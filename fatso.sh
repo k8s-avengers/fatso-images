@@ -16,14 +16,17 @@ install_dependencies
 fragment_function_names_sanity_check
 check_docker_daemon_for_sanity
 
-declare -g -r FLAVOR="${1:-"ubuntu-noble-baremetal-cloud-k8s-nvidia"}"
+declare -g -r FLAVOR="${1}"
 declare -g -r FLAVOR_DIR="flavors/${FLAVOR}"
 declare -g -r FLAVOR_CONF="${FLAVOR_DIR}/flavor.conf.sh"
 
 # Check FLAVOR is set and FLAVOR_DIR exists and also the config file
-[[ -z "${FLAVOR}" ]] && log error "FLAVOR is not set" && exit 1
+[[ -z "${FLAVOR}" ]] && log error "FLAVOR is not set; please pass it as 1st argument." && exit 1
 [[ ! -d "${FLAVOR_DIR}" ]] && log error "FLAVOR_DIR '${FLAVOR_DIR}' does not exist" && exit 1
 [[ ! -f "${FLAVOR_CONF}" ]] && log error "FLAVOR_CONF '${FLAVOR_CONF}' does not exist" && exit 1
+
+# the rest of the arguments are extra fragments to include, handled below
+shift
 
 # Source the FLAVOR_CONF
 # shellcheck disable=SC1090 # yeah you know dynamic sourcing
@@ -55,6 +58,10 @@ log info "BUILDER_DESCRIPTION=${BUILDER_DESCRIPTION}"
 [[ -z "${BUILDER_CACHE_PKGS_ID}" ]] && log error "BUILDER_CACHE_PKGS_ID is not set" && exit 1
 log info "BUILDER_CACHE_PKGS_ID=${BUILDER_CACHE_PKGS_ID}"
 
+# Add extra cmdline arguments to FLAVOR_FRAGMENTS
+FLAVOR_FRAGMENTS+=("${@}")
+# Make it read-only from now
+declare -g -a -r FLAVOR_FRAGMENTS
 ####################################################################################################################################################################################
 
 # Customization for the builder image. @TODO convert to interface/impl
@@ -116,7 +123,7 @@ mkdir -p "${WORK_DIR}"
 # Enable the fragments declared by the flavor
 # @TODO allow command-line/env prepending and appending to this
 log info "Enabling fragments for flavor '${FLAVOR}'..."
-enable_fragments "${FLAVOR_FRAGMENTS[@]}"
+enable_fragments "${FLAVOR_FRAGMENTS[@]}" # this adds extra fragments from the command line
 log info "Done enabling fragments for flavor '${FLAVOR}'..."
 
 # make sure mkosi.conf exists, so crudini can do its work on it
@@ -141,6 +148,12 @@ build_mkosi_script_from_fragments prepare "mkosi.prepare" # runs twice, with 'fi
 build_mkosi_script_from_fragments build "mkosi.build"
 build_mkosi_script_from_fragments postinst "mkosi.postinst"
 build_mkosi_script_from_fragments finalize "mkosi.finalize"
+
+# those are not really for mkosi, but before/after helpers that will run inside the Docker container
+# can be used to twist the image in ways mkosi can't, like pre-downloading things, or post-processing (eg convert to qcow2/vhdx/etc)
+# They will be explicitly called before & after mkosi invocation, below
+always="yes" include_chroot="no" build_mkosi_script_from_fragments pre_mkosi "pre_mkosi.sh"
+always="yes" include_chroot="no" build_mkosi_script_from_fragments post_mkosi "post_mkosi.sh"
 
 log info "Done scripting part with bash magic"
 
@@ -227,7 +240,7 @@ docker_opts+=("${BUILDER_IMAGE_REF}")
 declare real_cmd="/usr/local/bin/mkosi ${mkosi_opts[*]} build"
 log info "Real mkosi invocation: ${real_cmd}"
 
-docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && ${real_cmd}") # possible escaping hell here
+docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && bash pre_mkosi.sh && ${real_cmd} && bash post_mkosi.sh") # possible escaping hell here
 
 # @TODO: allow further customization of the mkosi command line
 

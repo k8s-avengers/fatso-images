@@ -4,6 +4,15 @@ function enable_fragments() {
 	declare fragment
 	for fragment in "${@}"; do
 		log info "Enabling fragment: ${fragment}"
+		# sugar: allow for fragments to be enabled without the .sh extension
+		if [[ ! -f "fragments/${fragment}" ]]; then
+			fragment="${fragment}.sh"
+		fi
+		# check file actually exists before sourcing
+		if [[ ! -f "fragments/${fragment}" ]]; then
+			log error "Can't find fragment '${fragment}'"
+			exit 3
+		fi
 		# shellcheck disable=SC1090
 		source "fragments/${fragment}"
 	done

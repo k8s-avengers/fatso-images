@@ -5,7 +5,7 @@
 declare -g -r BUILDER="ubuntu"
 declare -g -r BUILDER_CACHE_PKGS_ID="ubuntu-noble"
 
-declare -g -r -a FLAVOR_FRAGMENTS=(
+declare -g -a FLAVOR_FRAGMENTS=(
 	"common_base.sh"
 	"ubuntu/base.sh"
 	"ubuntu/ssh.sh"
