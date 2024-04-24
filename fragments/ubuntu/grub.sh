@@ -64,7 +64,7 @@ function mkosi_script_postinst_chroot::grub_fixes() {
 	cat <<- 'EOD' > /usr/local/sbin/pxe-boot-this
 		#!/bin/bash
 		set -e 
-		declare pxe_efi_bootnum="$(efibootmgr | grep "IPV4" | cut -d " " -f 1 | sed -e 's/Boot//g' | sed -e 's/*//g')"
+		declare pxe_efi_bootnum="$(efibootmgr | grep -e "IPV4" -e "EFI Network" | cut -d " " -f 1 | head -1 | sed -e 's/Boot//g' | sed -e 's/*//g')"
 		echo "PXE bootnum: ${pxe_efi_bootnum}"
 		efibootmgr --bootnext "${pxe_efi_bootnum}"
 		sync
