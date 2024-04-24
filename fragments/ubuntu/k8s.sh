@@ -1,23 +1,24 @@
 #!/usr/bin/env bash
 
-# @TODO mkosi hasn't good support for adding external repos, skeleton trees are needed, create a helper for this
-function config_mkosi_pre::k8s() {
-	mkosi_conf_begin_edit "k8spkgman"
-	mkosi_conf_config_value "Distribution" "PackageManagerTrees" "package-manager/apt-k8s" # @TODO this is a list of trees actually
-	mkosi_conf_finish_edit "k8spkgman"
+# Oops, a global variable!
+declare -g -r K8S_MAJOR_MINOR="1.28"
 
-	declare K8S_MAJOR_MINOR="1.28"
+# Add the repo config to the skeketon tree, and mark the pkgs to be installed; this way we capitalize on mkosi's caches
+function config_mkosi_pre::k8s() {
 	log warn "Adding k8s binaries version ${K8S_MAJOR_MINOR}"
 
-	mkosi_stdin_to_work_file "package-manager/apt-k8s/etc/apt/sources.list.d" "kubernetes.list" <<- SOURCES_LIST_K8S
+	mkosi_stdin_to_work_file "package-manager-tree/etc/apt/sources.list.d" "kubernetes.list" <<- SOURCES_LIST_K8S
 		deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${K8S_MAJOR_MINOR}/deb/ /
 	SOURCES_LIST_K8S
 
-	# This ends up running in the host, of course, so gpg & curl need to be available # @TODO: maybe in a config script?
-	mkdir -p "${WORK_DIR}/package-manager/apt-k8s/etc/apt/keyrings"
-	curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${K8S_MAJOR_MINOR}/deb/Release.key" | gpg --dearmor -o "${WORK_DIR}/package-manager/apt-k8s/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
-
 	mkosi_config_add_rootfs_packages "kubeadm" "kubelet" "kubectl"
+}
+
+# This runs _outside_ of mkosi, but inside the docker container, directly in the WORK_DIR; just add files there
+function mkosi_script_pre_mkosi_host::k8s_apt_keyring() {
+	log warn "Adding k8s apt-key version ${K8S_MAJOR_MINOR}"
+	mkdir -p "package-manager-tree/etc/apt/keyrings"
+	curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${K8S_MAJOR_MINOR}/deb/Release.key" | gpg --dearmor -o "package-manager-tree/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 }
 
 function mkosi_script_postinst_chroot::502_k8s_install() {
