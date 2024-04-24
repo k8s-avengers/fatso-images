@@ -17,8 +17,8 @@ fragment_function_names_sanity_check
 check_docker_daemon_for_sanity
 
 declare -g -r FLAVOR="${1}"
-declare -g -r FLAVOR_DIR="flavors/${FLAVOR}"
-declare -g -r FLAVOR_CONF="${FLAVOR_DIR}/flavor.conf.sh"
+declare -g -r FLAVOR_DIR="flavors"
+declare -g -r FLAVOR_CONF="${FLAVOR_DIR}/${FLAVOR}.sh"
 
 # Check FLAVOR is set and FLAVOR_DIR exists and also the config file
 [[ -z "${FLAVOR}" ]] && log error "FLAVOR is not set; please pass it as 1st argument." && exit 1
@@ -135,7 +135,7 @@ always="yes" create_mkosi_script_from_fragments_specific "post_mkosi_host" "${WO
 log info "Done scripting part with bash magic"
 
 log info "Showing resulting WORK_DIR tree:"
-tree -h "${WORK_DIR}"
+tree -h "${WORK_DIR}" || true
 
 if [[ "${STOP_BEFORE_BUILDING}" == "yes" ]]; then
 	log warn "STOP_BEFORE_BUILDING=yes, stopping."
@@ -168,12 +168,16 @@ mkdir -p "${OUTPUT_DIR}"
 
 declare -g -r OUTPUT_IMAGE_FILE_RAW="${OUTPUT_DIR}/image.raw"
 log info "Expecting output image at ${OUTPUT_IMAGE_FILE_RAW}"
+declare -g -r OUTPUT_MANIFEST_FILE_RAW="${OUTPUT_DIR}/image.manifest"
+log info "Expecting output manifest JSON ${OUTPUT_MANIFEST_FILE_RAW}"
 
 # Prepare dist dist (final output dir)
 declare -g -r DIST_DIR="dist"
 mkdir -p "${DIST_DIR}"
 declare -g -r DIST_FILE_IMG_RAW_GZ="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.img.gz"
-log info "Distribution file will be at ${DIST_FILE_IMG_RAW_GZ}"
+log info "Distribution image file will be at ${DIST_FILE_IMG_RAW_GZ}"
+declare -g -r DIST_FILE_MANIFEST_JSON="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.manifest.json"
+log info "Distribution manifest file will be at ${DIST_FILE_MANIFEST_JSON}"
 
 ####################################################################################################################################################################################
 # Actually build; first build the builder Docker image, then use it to run mkosi
@@ -241,6 +245,12 @@ docker "${docker_opts[@]}"
 log info "Done building using mkosi! ${FLAVOR}"
 
 ####################################################################################################################################################################################
+# If found, copy the manifest file to the dist dir
+if [[ -f "${OUTPUT_MANIFEST_FILE_RAW}" ]]; then
+	cp "${OUTPUT_MANIFEST_FILE_RAW}" "${DIST_FILE_MANIFEST_JSON}"
+	log info "Output JSON manifest ${DIST_FILE_MANIFEST_JSON}"
+fi
+
 # Compress the image from OUTPUT_IMAGE_FILE_RAW to DIST_FILE_IMG_RAW_GZ, using pigz
 declare size_orig_human size_compress_human
 # get a human representation of the size, use "du -h"
