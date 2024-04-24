@@ -74,6 +74,47 @@ log debug "CACHE_DIR_INCREMENTAL=${CACHE_DIR_INCREMENTAL}"
 log debug "CACHE_DIR_WORKSPACE=${CACHE_DIR_WORKSPACE}"
 log debug "CACHE_DIR_EXTRA=${CACHE_DIR_EXTRA}"
 
+####################################################################################################################################################################################
+# Version calc, for GHA's benefit
+
+declare -g -r IMAGE_VERSION="${IMAGE_VERSION:-"666"}"
+
+declare CURRENT_DATE_VERSION # yyyymmddhhmm (UTC) - year month day hour minute
+CURRENT_DATE_VERSION=$(date -u "+%Y%m%d%H%M")
+declare FULL_VERSION="${CURRENT_DATE_VERSION}-${IMAGE_VERSION}"
+
+# Set GH output with the full version, if it's a file
+if [[ -n "${GITHUB_OUTPUT}" ]]; then
+	log info "Setting FULL_VERSION=${FULL_VERSION} in GITHUB_OUTPUT=${GITHUB_OUTPUT}"
+	echo "FULL_VERSION=${FULL_VERSION}" >> "${GITHUB_OUTPUT}"
+else
+	log debug "GITHUB_OUTPUT is not set, not setting FULL_VERSION=${FULL_VERSION}"
+fi
+
+####################################################################################################################################################################################
+
+# Prepare output dir (mkosi's output dir)
+declare -g -r OUTPUT_DIR="out/flavors/${FLAVOR}"
+rm -rf "${OUTPUT_DIR}"
+mkdir -p "${OUTPUT_DIR}"
+
+declare -g OUTPUT_IMAGE_FILE_RAW="${OUTPUT_DIR}/image.raw"
+declare -g OUTPUT_MANIFEST_FILE_RAW="${OUTPUT_DIR}/image.manifest"
+
+# Prepare dist dist (final output dir)
+declare -g -r DIST_DIR="dist"
+mkdir -p "${DIST_DIR}"
+declare -g DIST_FILE_IMG_RAW_GZ="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.img.gz"
+declare -g DIST_FILE_MANIFEST_JSON="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.manifest.json"
+
+# Log the original expected locations; might be changed by config fragments
+log info "(initial) Expecting output image at ${OUTPUT_IMAGE_FILE_RAW}"
+log info "(initial) Expecting output manifest JSON ${OUTPUT_MANIFEST_FILE_RAW}"
+log info "(initial) Distribution image file will be at ${DIST_FILE_IMG_RAW_GZ}"
+log info "(initial) Distribution manifest file will be at ${DIST_FILE_MANIFEST_JSON}"
+
+####################################################################################################################################################################################
+
 # Prepare WORK_DIR; this is gonna be /work in the Docker container
 declare -g -r WORK_DIR="work/flavors/${FLAVOR}"
 log info "Using WORK_DIR=${WORK_DIR}"
@@ -106,7 +147,14 @@ run_fragment_implementations "config_mkosi_post"
 
 log info "Done with configuration part"
 
-log info "Start scripting part with bash magic"
+log info "(final) Expecting output image at ${OUTPUT_IMAGE_FILE_RAW}"
+log info "(final) Expecting output manifest JSON ${OUTPUT_MANIFEST_FILE_RAW}"
+log info "(final) Distribution image file will be at ${DIST_FILE_IMG_RAW_GZ}"
+log info "(final) Distribution manifest file will be at ${DIST_FILE_MANIFEST_JSON}"
+
+####################################################################################################################################################################################
+
+log info "Start script generation..."
 
 # See https://github.com/systemd/mkosi/blob/main/mkosi/resources/mkosi.md#execution-flow
 # and https://github.com/systemd/mkosi/blob/main/mkosi/resources/mkosi.md#scripts
@@ -117,7 +165,6 @@ build_mkosi_script_from_fragments build "mkosi.build"
 build_mkosi_script_from_fragments postinst "mkosi.postinst"
 build_mkosi_script_from_fragments finalize "mkosi.finalize"
 
-####################################################################################################################################################################################
 # Customization for the builder image
 declare -g -r BUILDER_EARLY_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_early.sh"
 declare -g -r BUILDER_LATE_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_late.sh"
@@ -132,7 +179,7 @@ frag_var="BUILDER_FRAGMENTS_LATE" always="yes" create_mkosi_script_from_fragment
 always="yes" create_mkosi_script_from_fragments_specific "pre_mkosi_host" "${WORK_DIR}/pre_mkosi.sh"
 always="yes" create_mkosi_script_from_fragments_specific "post_mkosi_host" "${WORK_DIR}/post_mkosi.sh"
 
-log info "Done scripting part with bash magic"
+log info "Done with script generation."
 
 log info "Showing resulting WORK_DIR tree:"
 tree -h "${WORK_DIR}" || true
@@ -143,41 +190,6 @@ if [[ "${STOP_BEFORE_BUILDING}" == "yes" ]]; then
 	log warn "STOP_BEFORE_BUILDING=yes, stopping."
 	exit 0
 fi
-
-####################################################################################################################################################################################
-# Version calc, for GHA's benefit
-
-declare -g -r IMAGE_VERSION="${IMAGE_VERSION:-"666"}"
-
-declare CURRENT_DATE_VERSION # yyyymmddhhmm (UTC) - year month day hour minute
-CURRENT_DATE_VERSION=$(date -u "+%Y%m%d%H%M")
-declare FULL_VERSION="${CURRENT_DATE_VERSION}-${IMAGE_VERSION}"
-
-# Set GH output with the full version, if it's a file
-if [[ -n "${GITHUB_OUTPUT}" ]]; then
-	log info "Setting FULL_VERSION=${FULL_VERSION} in GITHUB_OUTPUT=${GITHUB_OUTPUT}"
-	echo "FULL_VERSION=${FULL_VERSION}" >> "${GITHUB_OUTPUT}"
-else
-	log debug "GITHUB_OUTPUT is not set, not setting FULL_VERSION=${FULL_VERSION}"
-fi
-
-# Prepare output dir (mkosi's output dir)
-declare -g -r OUTPUT_DIR="out/flavors/${FLAVOR}"
-rm -rf "${OUTPUT_DIR}"
-mkdir -p "${OUTPUT_DIR}"
-
-declare -g -r OUTPUT_IMAGE_FILE_RAW="${OUTPUT_DIR}/image.raw"
-log info "Expecting output image at ${OUTPUT_IMAGE_FILE_RAW}"
-declare -g -r OUTPUT_MANIFEST_FILE_RAW="${OUTPUT_DIR}/image.manifest"
-log info "Expecting output manifest JSON ${OUTPUT_MANIFEST_FILE_RAW}"
-
-# Prepare dist dist (final output dir)
-declare -g -r DIST_DIR="dist"
-mkdir -p "${DIST_DIR}"
-declare -g -r DIST_FILE_IMG_RAW_GZ="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.img.gz"
-log info "Distribution image file will be at ${DIST_FILE_IMG_RAW_GZ}"
-declare -g -r DIST_FILE_MANIFEST_JSON="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.manifest.json"
-log info "Distribution manifest file will be at ${DIST_FILE_MANIFEST_JSON}"
 
 ####################################################################################################################################################################################
 # Actually build; first build the builder Docker image, then use it to run mkosi
@@ -251,6 +263,7 @@ if [[ -f "${OUTPUT_MANIFEST_FILE_RAW}" ]]; then
 	log info "Output JSON manifest ${DIST_FILE_MANIFEST_JSON}"
 fi
 
+# @TODO this would be much better done by interface/impl; not everyone wants .gz
 # Compress the image from OUTPUT_IMAGE_FILE_RAW to DIST_FILE_IMG_RAW_GZ, using pigz
 declare size_orig_human size_compress_human
 # get a human representation of the size, use "du -h"
