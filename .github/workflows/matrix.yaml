@@ -8,7 +8,7 @@ jobs:
     env:
       BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      IMAGE_VERSION: "1005"
+      IMAGE_VERSION: "1006"
     permissions:
       packages: write # to write to ghcr.io
       contents: write # to commit to the repo
@@ -17,10 +17,12 @@ jobs:
       fail-fast: false # let other jobs try to complete if one fails
       matrix:
         include:
-          - { id: "ubuntu-noble-baremetal-cloud-k8s-nvidia", env: { FLAVOR: "ubuntu-noble-baremetal-cloud-k8s-nvidia" } }
-          #- { id: "ubuntu-noble-baremetal-workstation", env: { FLAVOR: "ubuntu-noble-baremetal-workstation" } }
-          #- { id: "el-9-baremetal", env: { FLAVOR: "el-9-baremetal" } }
-          #- { id: "rocky-8-baremetal", env: { FLAVOR: "rocky-8-baremetal" } }
+          - { id: "el-8-baremetal" , env: { } }
+          - { id: "el-9-baremetal" , env: { } }
+          - { id: "fedora-40-baremetal", env: { } }
+          - { id: "ubuntu-noble-baremetal-cloud-k8s-nvidia", env: { } }
+          - { id: "ubuntu-noble-baremetal-workstation", env: { } }
+          - { id: "ubuntu-noble-hyperv-cloud-k8s", env: { } }
     name: "${{ matrix.id }}"
     steps:
       - name: cleanup GHA hosted runner
@@ -46,7 +48,7 @@ jobs:
         id: buildimage
         env: ${{ matrix.env }} # this gets combined with the job-wide env's like BASE_OCI_REF
         run: |
-          bash fatso.sh "${{ matrix.id }}"
+          bash fatso.sh "${{ matrix.id }}" korok
 
       # Release the artifacts into GitHub Releases for easy downloading
       - name: "GH Release ${{matrix.id}} for version ${{ steps.buildimage.outputs.FULL_VERSION }}"
