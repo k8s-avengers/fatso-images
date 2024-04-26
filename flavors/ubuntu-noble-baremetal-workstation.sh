@@ -13,7 +13,6 @@ declare -g -a FLAVOR_FRAGMENTS=(
 	"ubuntu/grub"
 	"ubuntu/baremetal"
 	"ubuntu/k3s"
-	"ubuntu/nvidia"
 	"ubuntu/networkmanager"
 	"ubuntu/wifi"
 )
