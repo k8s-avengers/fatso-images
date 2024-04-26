@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-
-
 set -e # stop on errors
 
 # Ensure /usr/local/bin is first in PATH

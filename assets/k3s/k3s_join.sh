@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-
-
 set -e # stop on errors
 
 # if first argument unset, bail

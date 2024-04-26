@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
-
 function mkosi_conf_config_value() {
 	# use crudini to manipulate mkosi.conf in the working directory
-	# @TODO: where does it (crudini) come from...
 
 	declare section="$1"
 	shift

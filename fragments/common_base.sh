@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 function config_mkosi_post::300_common_base() {
-	mkdir -pv "${WORK_DIR}/package-manager-tree" 
-	mkdir -pv "${WORK_DIR}/extra-packages" 
+	mkdir -pv "${WORK_DIR}/package-manager-tree"
+	mkdir -pv "${WORK_DIR}/extra-packages"
 
 	mkosi_conf_begin_edit "common base stuff"
 	mkosi_conf_config_value "Output" "ManifestFormat" "json"
@@ -13,10 +13,10 @@ function config_mkosi_post::300_common_base() {
 	mkosi_conf_config_value "Content" "WithNetwork" "yes"
 	mkosi_conf_config_value "Content" "RootPassword" "rootrootroot"
 	mkosi_conf_config_value "Content" "Autologin" "true"
-	
+
 	mkosi_conf_config_value "Distribution" "PackageManagerTrees" "package-manager-tree"
 	mkosi_conf_config_value "Content" "BuildSources" "./extra-packages:extra-packages"
-	
+
 	mkosi_conf_finish_edit "common base stuff"
 }
 
