@@ -199,9 +199,15 @@ log info "Preparing builder..."
 declare -g -r BUILDER_IMAGE_REF="fatso-builder-${BUILDER}:local"
 
 log info "Building builder image '${BUILDER_IMAGE_REF}'"
+declare -a docker_build_args=()
+docker_build_args+=("--build-arg" "PROXY_NO_PROXY=${no_proxy}")       # repass env var as ARG; will be set into ENVs by Dockerfile
+docker_build_args+=("--build-arg" "PROXY_HTTP_PROXY=${http_proxy}")   # repass env var as ARG; will be set into ENVs by Dockerfile
+docker_build_args+=("--build-arg" "PROXY_HTTPS_PROXY=${https_proxy}") # repass env var as ARG; will be set into ENVs by Dockerfile
+log info "Building builder image with docker build options: ${docker_build_args[*]}"
+
 (
 	cd "${BUILDER_DIR}" || { log error "crazy about ${BUILDER_DIR}" && exit 1; }
-	docker buildx build --progress=plain --load -t "${BUILDER_IMAGE_REF}" .
+	docker build "${docker_build_args[@]}" -t "${BUILDER_IMAGE_REF}" .
 )
 log info "Build done for builder ${BUILDER_IMAGE_REF}"
 ####################################################################################################################################################################################

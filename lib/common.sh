@@ -17,6 +17,7 @@ function log() {
 function install_dependencies() {
 	declare -a debian_pkgs=()
 	[[ ! -f /usr/bin/jq ]] && debian_pkgs+=("jq")
+	[[ ! -f /usr/bin/pigz ]] && debian_pkgs+=("pigz")
 	[[ ! -f /usr/bin/crudini ]] && debian_pkgs+=("crudini")
 
 	# If running on Debian or Ubuntu...
@@ -48,8 +49,7 @@ function check_docker_daemon_for_sanity() {
 	log debug "Docker Buildx version" "${docker_buildx_version}"
 
 	if [[ -z "${docker_buildx_version}" ]]; then
-		log error "'docker info' indicates there's no buildx installed. Please install docker buildx."
-		exit 4
+		log info "'docker info' indicates there's no buildx installed."
 	fi
 
 	# Once we know docker is sane, hook up a function that helps us trace invocations.
