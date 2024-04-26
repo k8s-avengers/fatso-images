@@ -3,3 +3,4 @@ out
 work
 dist
 cache
+builder/**/builder_dockerfile_*.sh
