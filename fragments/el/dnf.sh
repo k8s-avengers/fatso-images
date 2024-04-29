@@ -4,8 +4,8 @@
 function config_mkosi_post::100_el_dnf_base_distro() {
 	# Bomb if EL_DISTRO is not set; oneliner
 	[[ -z "${EL_DISTRO}" ]] && log error "EL_DISTRO is not set by the flavor!" && return 1
-	[[ -z "${EL_RELEASE}" ]] && log error "EL_DISTRO is not set by the flavor!" && return 1
-	[[ -z "${EL_REPOSITORIES}" ]] && log error "EL_DISTRO is not set by the flavor!" && return 1
+	[[ -z "${EL_RELEASE}" ]] && log error "EL_RELEASE is not set by the flavor!" && return 1
+	[[ -z "${EL_REPOSITORIES}" ]] && log warning "EL_REPOSITORIES is not set by the flavor!"
 
 	mkosi_conf_begin_edit "base"
 	mkosi_conf_config_value "Distribution" "Distribution" "${EL_DISTRO}"
@@ -51,8 +51,8 @@ function mkosi_script_finalize_chroot::980_el_dnf_late_fixes() {
 	log info "Largest folders, at finalize stage..."
 	du -h -d 7 -x / | sort -h | tail -n 50
 
-	log info "dnf package installed sizes, at finalize stage..."
-	dnf repoquery --queryformat "%{SIZE}\t%{NAME}" --all --installed --quiet | sort -n || true
+	#log info "dnf package installed sizes, at finalize stage..."
+	#dnf repoquery --queryformat "%{SIZE}\t%{NAME}" --all --installed --quiet | sort -n || true
 }
 
 # NOT an implementation, just regular function; used by other fragments!
@@ -75,7 +75,7 @@ function mkosi_config_add_rootfs_packages() {
 
 # No neofetch in EL, use screenfetch @TODO move out of here
 function mkosi_script_postinst_chroot::neofetch() {
-	wget -O /usr/bin/neofetch "https://raw.githubusercontent.com/KittyKatt/screenFetch/master/screenfetch-dev" || true
+	wget --no-check-certificate -O /usr/bin/neofetch "https://raw.githubusercontent.com/KittyKatt/screenFetch/master/screenfetch-dev" || true
 	chmod +x /usr/bin/neofetch || true
 	ls -la /usr/bin/neofetch || true
 }

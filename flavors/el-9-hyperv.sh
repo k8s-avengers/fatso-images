@@ -12,16 +12,18 @@ declare -g -r EL_REPOSITORIES="" # EPEL is added manually via fragment el/epel_m
 declare -g -a FLAVOR_FRAGMENTS=(
 	"common_base"
 	"common_bootable"
+	"output_vhdx"
 	"el/dnf"
 	"el/epel_mirror"
 	"el/el9_base"
 	"el/grub"
+	"el/networkmanager"
 	"el/el9_kernel_lts"
 	"el/k8s-docker-containerd"
 	"el/k8s"
 )
 
 # "Inline" fragment functions!
-function config_mkosi_pre::el_9_baremetal_pkgs() {
-	mkosi_config_add_rootfs_packages "microcode_ctl" "linux-firmware" "usbutils"
+function config_mkosi_pre::el_9_hyperv_pkgs() {
+	mkosi_config_add_rootfs_packages "hyperv-daemons" "hyperv-tools"
 }

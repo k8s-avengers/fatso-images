@@ -235,6 +235,14 @@ else
 	log debug "http_proxy is not set, skipping --proxy-url"
 fi
 
+# if no_proxy is set, pass it to mkosi via --proxy-exclude=
+if [[ -n "${no_proxy}" ]]; then
+	log info "no_proxy is set, passing it to mkosi via --proxy-exclude (${no_proxy})"
+	mkosi_opts+=("--proxy-exclude==${no_proxy}")
+else
+	log debug "no_proxy is not set, skipping --proxy-exclude="
+fi
+
 declare -a docker_opts=()
 docker_opts+=("run" "--rm")
 [[ -t 0 ]] && docker_opts+=("-it") # If terminal is interactive, add -it
@@ -269,14 +277,21 @@ if [[ -f "${OUTPUT_MANIFEST_FILE_RAW}" ]]; then
 	log info "Output JSON manifest ${DIST_FILE_MANIFEST_JSON}"
 fi
 
-# @TODO this would be much better done by interface/impl; not everyone wants .gz
-# Compress the image from OUTPUT_IMAGE_FILE_RAW to DIST_FILE_IMG_RAW_GZ, using pigz
 declare size_orig_human size_compress_human
 # get a human representation of the size, use "du -h"
 size_orig_human=$(du --si "${OUTPUT_IMAGE_FILE_RAW}" | cut -f 1)
-log info "Compressing image to ${DIST_FILE_IMG_RAW_GZ}"
-pigz -1 -c "${OUTPUT_IMAGE_FILE_RAW}" > "${DIST_FILE_IMG_RAW_GZ}"
-size_compress_human=$(du --si "${DIST_FILE_IMG_RAW_GZ}" | cut -f 1)
-log info "Done compressing image to ${DIST_FILE_IMG_RAW_GZ} from ${size_orig_human} to ${size_compress_human}."
+log info "Output image ${OUTPUT_IMAGE_FILE_RAW} size ${size_orig_human}"
+
+if [[ -n "${COPY_IMAGE_TO}" ]]; then
+	log info "COPY_IMAGE_TO='${COPY_IMAGE_TO}' thus copying OUTPUT_IMAGE_FILE_RAW='${OUTPUT_IMAGE_FILE_RAW}' there..."
+	cp -v "${OUTPUT_IMAGE_FILE_RAW}" "${COPY_IMAGE_TO}/"
+else
+	# @TODO this would be much better done by interface/impl; not everyone wants .gz
+	# Compress the image from OUTPUT_IMAGE_FILE_RAW to DIST_FILE_IMG_RAW_GZ, using pigz
+	log info "Compressing image to ${DIST_FILE_IMG_RAW_GZ}"
+	pigz -1 -c "${OUTPUT_IMAGE_FILE_RAW}" > "${DIST_FILE_IMG_RAW_GZ}"
+	size_compress_human=$(du --si "${DIST_FILE_IMG_RAW_GZ}" | cut -f 1)
+	log info "Done compressing image to ${DIST_FILE_IMG_RAW_GZ} from ${size_orig_human} to ${size_compress_human}."
+fi
 
 log info "Distribution done."

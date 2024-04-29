@@ -16,7 +16,7 @@ ADD builder_dockerfile_early.sh /extra-dockerfile/builder_dockerfile_early.sh
 RUN bash -e /extra-dockerfile/builder_dockerfile_early.sh
 
 # Yes, this has a huge dependency tree. Hopefully you won't cache miss this too often; reduce your usage of early fragments.
-RUN apt-get update && apt-get install -y jq wget curl tree reprepro xfsprogs git kmod mkosi dpkg-dev devscripts grub-efi systemd-ukify systemd-boot cpio mtools
+RUN apt-get update && apt-get install -y jq wget curl tree reprepro xfsprogs git kmod mkosi dpkg-dev devscripts grub-efi systemd-ukify systemd-boot cpio mtools qemu-utils
 
 WORKDIR /cache/packages
 WORKDIR /out

@@ -9,14 +9,8 @@ function config_mkosi_init::output_vhdx() {
 	declare -r -g -r DIST_FILE_IMG_RAW_GZ="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.vhdx.gz"
 }
 
-function mkosi_script_builder_dockerfile_late_host::output_vhdx() {
-	# NOTE: to use this, add the fragment name to BUILDER_FRAGMENTS_LATE in config_mkosi_init::output_vhdx (already done as example)
-	log info "output_vhdx: Installing qemu-utils for vhdx conversion"
-	apt-get install -y qemu-utils # @TODO: what if it was an EL-based builder?
-}
-
 function mkosi_script_post_mkosi_host::output_vhdx() {
-	log korok "You found me! mkosi_script_post_mkosi_host::output_vhdx - I run after mkosi is done building the image, still inside Docker."
+	log info "output_vhdx: Converting image to VHDX format, with qcow2 intermediary"
 	declare original_raw_image="/out/image.raw"
 	declare temp_qcow2_image="/out/image_temp.qcow2"
 	declare full_file_vhdx="/out/image.vhdx"

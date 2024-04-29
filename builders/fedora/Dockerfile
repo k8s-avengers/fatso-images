@@ -15,7 +15,7 @@ ADD builder_dockerfile_early.sh /extra-dockerfile/builder_dockerfile_early.sh
 RUN bash -e /extra-dockerfile/builder_dockerfile_early.sh
 
 # Yes, this has a huge dependency tree. Hopefully you won't cache miss this too often; reduce your usage of early fragments.
-RUN dnf -y install --best --allowerasing jq wget curl tree systemd-ukify systemd-boot systemd-boot-unsigned cpio mtools xfsprogs git kmod mkosi apt dpkg ubu-keyring grub2-efi-x64 grub2-efi-x64-modules grub2-tools grub2-tools-efi grub2-tools-extra
+RUN dnf -y install --best --allowerasing jq wget curl tree systemd-ukify systemd-boot systemd-boot-unsigned cpio mtools xfsprogs git kmod mkosi apt dpkg ubu-keyring grub2-efi-x64 grub2-efi-x64-modules grub2-tools grub2-tools-efi grub2-tools-extra qemu-img
 
 WORKDIR /cache/packages
 WORKDIR /out

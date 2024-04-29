@@ -18,7 +18,7 @@ function config_mkosi_pre::k8s() {
 function mkosi_script_pre_mkosi_host::k8s_apt_keyring() {
 	log warn "Adding k8s apt-key version ${K8S_MAJOR_MINOR}"
 	mkdir -p "package-manager-tree/etc/apt/keyrings"
-	curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${K8S_MAJOR_MINOR}/deb/Release.key" | gpg --dearmor -o "package-manager-tree/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+	curl -fsSL -k "https://pkgs.k8s.io/core:/stable:/v${K8S_MAJOR_MINOR}/deb/Release.key" | gpg --dearmor -o "package-manager-tree/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 }
 
 function mkosi_script_postinst_chroot::502_k8s_install() {
