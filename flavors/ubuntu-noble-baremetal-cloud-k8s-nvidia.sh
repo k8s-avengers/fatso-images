@@ -15,6 +15,6 @@ declare -g -a FLAVOR_FRAGMENTS=(
 	"ubuntu/cloud"
 	"ubuntu/k8s-worker-containerd"
 	"ubuntu/k8s"
-	#"ubuntu/k3s" # maybe just for workstation flavor, no server wants this crap
+	"ubuntu/k3s" # won't hurt; only deploys scripts
 	"ubuntu/nvidia"
 )

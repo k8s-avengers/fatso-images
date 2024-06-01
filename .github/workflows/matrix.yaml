@@ -8,7 +8,7 @@ jobs:
     env:
       BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      IMAGE_VERSION: "1006"
+      IMAGE_VERSION: "1007"
     permissions:
       packages: write # to write to ghcr.io
       contents: write # to commit to the repo
@@ -17,10 +17,11 @@ jobs:
       fail-fast: false # let other jobs try to complete if one fails
       matrix:
         include:
-          - { id: "el-8-baremetal" , env: { } }
-          - { id: "el-9-baremetal" , env: { } }
-          - { id: "fedora-40-baremetal", env: { } }
           - { id: "ubuntu-noble-baremetal-cloud-k8s-nvidia", env: { } }
+          #- { id: "el-8-baremetal" , env: { } }
+          - { id: "el-9-baremetal" , env: { } }
+          - { id: "el-9-hyperv" , env: { } }
+          - { id: "fedora-40-baremetal", env: { } }
           - { id: "ubuntu-noble-baremetal-workstation", env: { } }
           - { id: "ubuntu-noble-hyperv-cloud-k8s", env: { } }
     name: "${{ matrix.id }}"
