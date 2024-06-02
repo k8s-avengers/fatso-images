@@ -11,6 +11,10 @@ function config_mkosi_pre::el_9_base_pkgs() {
 		bash-completion
 		xfsprogs
 		sysstat
+		sudo
+		bc
+		hdparm
+		psmisc
 		btop   #  EPEL
 		htop   #  EPEL
 		screen #  EPEL
