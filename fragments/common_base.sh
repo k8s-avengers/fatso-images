@@ -21,10 +21,14 @@ function config_mkosi_post::300_common_base() {
 }
 
 function mkosi_script_postinst_chroot::000_common_base_early_debug() {
+	log info "Some debug info, early in the chroot; resolv.conf"
 	ls -la /etc/resolv.conf || true
 	cat /etc/resolv.conf || true
 
+	log info "Some debug info, early in the chroot; PATH/HOME and http_proxy/no_proxy"
 	echo "PATH: $PATH" || true
 	echo "HOME: $HOME" || true
 	echo "http_proxy: ${http_proxy:-"<none>"}" || true
+	echo "https_proxy: ${https_proxy:-"<none>"}" || true
+	echo "no_proxy: ${no_proxy:-"<none>"}" || true
 }

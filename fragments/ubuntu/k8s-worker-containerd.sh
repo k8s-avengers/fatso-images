@@ -64,6 +64,13 @@ function mkosi_script_postinst_chroot::400_k8s_worker_containerd_install() {
 		sed -i -e 's/runtimes.runc.options]/runtimes.runc.options]\n            SystemdCgroup = true/' /etc/containerd/config.toml
 	fi
 
+	# # Show the differences between the new config and the copy
+	# log info "Differences in containerd's config.toml after SystemdCgroup configuration..."
+	# diff -u /etc/containerd/config.toml.orig /etc/containerd/config.toml > toml.diff || true
+	# batcat --paging=never --force-colorization --wrap auto --terminal-width 80 --theme=Dracula --language=diff --file-name "containerd config.toml diff after systemd config" toml.diff
+	# cat toml.diff
+	# rm -f toml.diff
+
 	echo "Config cri-tools to use containerd..."
 	cat <<- EOD > /etc/crictl.yaml
 		runtime-endpoint: unix:///var/run/containerd/containerd.sock

@@ -121,11 +121,11 @@ function mkosi_script_postinst_chroot::980_ubuntu_late_fixes() {
 }
 
 function mkosi_script_finalize_chroot::980_ubuntu_late_fixes() {
-	log info "Largest folders, at finalize stage..."
-	du -h -d 7 -x / | sort -h | tail -n 50
+	log info "Largest 20 folders, at finalize stage..."
+	du -h -d 7 -x / | sort -h | tail -n 20
 
-	log info "package installed sizes, at finalize stage..."
-	dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n
+	log info "Largest 20 package installed sizes, at finalize stage..."
+	dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 20
 }
 
 # NOT an implementation, just regular function; used by other fragments!

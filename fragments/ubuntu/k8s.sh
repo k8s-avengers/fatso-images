@@ -5,7 +5,7 @@ declare -g -r K8S_MAJOR_MINOR="1.28"
 
 # Add the repo config to the skeketon tree, and mark the pkgs to be installed; this way we capitalize on mkosi's caches
 function config_mkosi_pre::k8s() {
-	log warn "Adding k8s binaries version ${K8S_MAJOR_MINOR}"
+	log info "Adding k8s binaries version ${K8S_MAJOR_MINOR}"
 
 	mkosi_stdin_to_work_file "package-manager-tree/etc/apt/sources.list.d" "kubernetes.list" <<- SOURCES_LIST_K8S
 		deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${K8S_MAJOR_MINOR}/deb/ /
@@ -16,7 +16,7 @@ function config_mkosi_pre::k8s() {
 
 # This runs _outside_ of mkosi, but inside the docker container, directly in the WORK_DIR; just add files there
 function mkosi_script_pre_mkosi_host::k8s_apt_keyring() {
-	log warn "Adding k8s apt-key version ${K8S_MAJOR_MINOR}"
+	log info "Adding k8s apt-key version ${K8S_MAJOR_MINOR}"
 	mkdir -p "package-manager-tree/etc/apt/keyrings"
 	curl -fsSL -k "https://pkgs.k8s.io/core:/stable:/v${K8S_MAJOR_MINOR}/deb/Release.key" | gpg --dearmor -o "package-manager-tree/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
 }
