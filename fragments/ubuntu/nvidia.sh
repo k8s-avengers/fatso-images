@@ -4,7 +4,7 @@
 # mkosi-install does magic to use the cache correctly already
 function mkosi_script_postinst_host::nvidia_installs() {
 	# use prebuilt stuff from ubuntu, which are only linked using the local system (and depend on binutils et al)
-	mkosi-install "linux-modules-nvidia-535-server-generic" "nvidia-utils-535-server" "nvtop"
+	mkosi-install "linux-modules-nvidia-535-server-generic" "nvidia-utils-535-server" "cuda-drivers-fabricmanager-535" "nvtop"
 }
 
 function mkosi_script_postinst_chroot::nvidia_fixes() {
