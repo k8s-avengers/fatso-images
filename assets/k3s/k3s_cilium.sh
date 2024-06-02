@@ -157,7 +157,7 @@ spec:
   bootstrap: true # don't wait for CNI
   targetNamespace: cilium
   createNamespace: true
-  version: 1.14.9 # or: 1.15.3
+  version: 1.15.5
   chart: cilium
   repo: https://helm.cilium.io/
   valuesContent: |-
@@ -391,6 +391,73 @@ spec:
 
 K3S_MANIFEST_TETRAGON
 
+# If on NVIDIA hardware, deploy minimal nvidia stuff for GPU support
+if [[ -f /usr/bin/nvidia-smi ]]; then
+	echo "NVIDIA GPU operator" >&2 # https://github.com/NVIDIA/gpu-operator
+
+	cat << K3S_MANIFEST_NVIDIA_OPERATOR | envsubst > /var/lib/rancher/k3s/server/manifests/nvidia-operator.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  namespace: kube-system
+  name: gpu-operator
+spec:
+  targetNamespace: gpu-operator
+  createNamespace: true
+  version: "24.3.0" # https://github.com/NVIDIA/gpu-operator/releases
+  chart: gpu-operator
+  repo: https://helm.ngc.nvidia.com/nvidia
+  # see https://github.com/NVIDIA/gpu-operator/blob/master/deployments/gpu-operator/values.yaml
+  valuesContent: |-
+    driver:
+      enabled: false # we already have drivers in place in image
+    toolkit:
+      enabled: false # already have nvidia-ctk in place and configured
+    dcgmExporter:
+      serviceMonitor:
+        enabled: true # yes, metrics
+
+K3S_MANIFEST_NVIDIA_OPERATOR
+
+	# Ollama
+	cat << K3S_MANIFEST_OLLAMA | envsubst > /var/lib/rancher/k3s/server/manifests/gpu-ollama.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  namespace: kube-system
+  name: ollama
+spec:
+  targetNamespace: ollama
+  createNamespace: true
+  version: "0.31.0" # https://github.com/otwld/ollama-helm/blob/main/Chart.yaml
+  chart: ollama
+  repo: https://otwld.github.io/ollama-helm/
+  # https://github.com/otwld/ollama-helm/blob/main/values.yaml
+  valuesContent: |-
+    runtimeClassName: "nvidia" # this is needed even when nvidia-ctk configured containerd for nvidia default runtime, as k3s has its own/separate containerd config!
+    ollama:
+      gpu:
+        enabled: true
+        type: 'nvidia'
+        number: 1
+    extraEnv:
+      - name: OLLAMA_MAX_LOADED_MODELS # Load max 5 models in memory
+        value: "5"
+      - name: OLLAMA_KEEP_ALIVE # Keep models running forever
+        value: "-1"
+    ingress:
+      enabled: true
+      className: nginx
+      hosts:
+        - host: "ollama.${BASE_DOMAIN_INGRESS}"
+          paths:
+            - path: /
+              pathType: Prefix
+      #tls: [ { hosts: [ "ollama.${BASE_DOMAIN_INGRESS}" ], secretName: "ollama-ingress-tls" } ]
+
+K3S_MANIFEST_OLLAMA
+fi
+
 # Install k3s using the standalone script
 echo "Installing k3s '${k3s_cmdline_opts[*]}'" >&2
 curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - "${k3s_cmdline_opts[@]}"
@@ -437,6 +504,8 @@ cat <<- K3S_PROFILE > /etc/profile.d/k3s.sh
 	source <(k9s completion bash)
 	source <(helm completion bash)
 	source <(cilium completion bash)
+	source <(nerdctl completion bash)
+	source <(crictl completion bash)
 K3S_PROFILE
 
 echo "Waiting for cilium to be ready" >&2
