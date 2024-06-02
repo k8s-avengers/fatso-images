@@ -116,6 +116,10 @@ function mkosi_script_postinst_chroot::160_ubuntu_early_apt_get_update() {
 }
 
 function mkosi_script_postinst_chroot::980_ubuntu_late_fixes() {
+	log info "Late fixes for Ubuntu..."
+	# Remove Canonical's ads # @TODO insert our own image ID and such
+	rm -fv /etc/update-motd.d/10-help-text /etc/update-motd.d/50-motd-news
+
 	# Clean apt cache (debs)
 	apt -y clean
 }
