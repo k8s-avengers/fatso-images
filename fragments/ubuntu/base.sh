@@ -13,6 +13,7 @@ function config_mkosi_pre::000_ubuntu_base() {
 		"sudo" # for, well, sudo'ing
 
 		"sysstat"         # for iostat et al
+		"psmisc"          # for killall etc
 		"bash"            # our favorite shell
 		"bash-completion" # for tab completion
 		"htop"            # for serious top
@@ -49,6 +50,8 @@ function config_mkosi_pre::000_ubuntu_base() {
 		"zstd"              # for zstd-compressed grub initrds
 		"jq"                # for JSON swiss army knife
 		"pv"                # for pipe viewer
+		"bc"                # for basic calculator
+		"hdparm"            # hdparm: for disk performance tuning
 		"neofetch"          # for lols
 		"bat"               # for cat with wings
 		"dnsutils"          # for nslookup et al
