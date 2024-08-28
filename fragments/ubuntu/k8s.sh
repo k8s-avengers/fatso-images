@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Oops, a global variable!
-declare -g -r K8S_MAJOR_MINOR="1.28"
+declare -g -r K8S_MAJOR_MINOR="1.30"
 
 # Add the repo config to the skeketon tree, and mark the pkgs to be installed; this way we capitalize on mkosi's caches
 function config_mkosi_pre::k8s() {
