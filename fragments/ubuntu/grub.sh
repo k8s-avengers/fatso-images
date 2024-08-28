@@ -60,6 +60,13 @@ function config_mkosi_post::ubuntu_grub() {
 
 # Could easily move those to assets
 function mkosi_script_postinst_chroot::grub_fixes() {
+	# Disable trying to symlink the latest versions of kernel in /boot -- mkosi forces us to use a VFAT for /boot which doesnt support symlinks
+	# This is only for allowing kernels to be upgraded. But these are supposed to be immutable. So really just a stopgap
+	cat <<- EOD >> /etc/kernel-img.conf
+		do_symlinks = no
+		no_symlinks = yes
+	EOD
+
 	# Create a script to reboot the system in PXE mode again. # @TODO group this with k3s scripts and avoid the heredocs
 	mkdir -p /usr/local/sbin
 	cat <<- 'EOD' > /usr/local/sbin/pxe-boot-this
