@@ -149,3 +149,9 @@ function mkosi_config_add_rootfs_packages() {
 		fi
 	done
 }
+
+function config_mkosi_pre::disable_audit() {
+	log info "Disabling audit in kernel command line..."
+	declare -g -a KERNEL_CMDLINE_FRAGMENTS
+	KERNEL_CMDLINE_FRAGMENTS+=("audit=0") # we don't have nor want auditd. stop spewing audit logs to dmesg
+}
