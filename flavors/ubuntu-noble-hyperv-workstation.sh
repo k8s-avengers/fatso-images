@@ -17,4 +17,7 @@ declare -g -a FLAVOR_FRAGMENTS=(
 	"ubuntu/grub"
 	"ubuntu/networkmanager"
 	"ubuntu/wifi"
+	"ubuntu/k8s-worker-containerd"
+	"ubuntu/k8s"
+
 )
