@@ -21,6 +21,7 @@ declare -g -a FLAVOR_FRAGMENTS=(
 	"el/el9_kernel_lts"
 	"el/k8s-docker-containerd"
 	"el/k8s"
+	"el/cloud"
 )
 
 # "Inline" fragment functions!
