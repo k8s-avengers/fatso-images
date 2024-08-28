@@ -15,6 +15,7 @@ declare -g -a FLAVOR_FRAGMENTS=(
 	"el/dnf"
 	"el/epel_mirror"
 	"el/el9_base"
+	"el/el_rocky_base"
 	"el/grub"
 	"el/networkmanager"
 	"el/el9_kernel_lts"

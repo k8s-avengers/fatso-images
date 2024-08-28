@@ -18,7 +18,6 @@ jobs:
       matrix:
         include:
           - { id: "ubuntu-noble-baremetal-cloud-k8s-nvidia", env: { } }
-          #- { id: "el-8-baremetal" , env: { } }
           - { id: "el-9-baremetal" , env: { } }
           - { id: "el-9-hyperv" , env: { } }
           - { id: "fedora-40-baremetal", env: { } }
