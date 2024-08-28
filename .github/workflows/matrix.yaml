@@ -8,7 +8,7 @@ jobs:
     env:
       BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      IMAGE_VERSION: "1008"
+      IMAGE_VERSION: "1009"
     permissions:
       packages: write # to write to ghcr.io
       contents: write # to commit to the repo
