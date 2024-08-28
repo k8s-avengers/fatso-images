@@ -72,12 +72,15 @@ function mkosi_script_postinst_chroot::grub_fixes() {
 	cat <<- 'EOD' > /usr/local/sbin/pxe-boot-this
 		#!/bin/bash
 		set -e 
-		declare pxe_efi_bootnum="$(efibootmgr | grep -e "IPV4" -e "EFI Network" | cut -d " " -f 1 | head -1 | sed -e 's/Boot//g' | sed -e 's/*//g')"
+		declare pxe_efi_bootnum="$(efibootmgr | grep -e "IPV4" -e "EFI Network" -e "NIC in Slot" | cut -d " " -f 1 | head -1 | sed -e 's/Boot//g' | sed -e 's/*//g')"
 		echo "PXE bootnum: ${pxe_efi_bootnum}"
 		efibootmgr --bootnext "${pxe_efi_bootnum}"
 		sync
-		echo "Rebooting in PXE mode in 2s..."
-		sleep 2
+		echo "PXE bootnum: ${pxe_efi_bootnum}"
+		echo "Rebooting in PXE mode in 10s... Ctrl-C to abort."
+		sleep 10
+		echo "fsync() and reboot..."
+		sync
 		reboot -f
 	EOD
 	chmod +x /usr/local/sbin/pxe-boot-this
