@@ -266,9 +266,14 @@ docker_opts+=("${BUILDER_IMAGE_REF}")
 declare real_cmd="/usr/local/bin/mkosi ${mkosi_opts[*]} build"
 log info "Real mkosi invocation: ${real_cmd}"
 
-docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && bash pre_mkosi.sh && chown ${UID} -R . && ${real_cmd} && bash post_mkosi.sh && chown ${UID} -R .") # possible escaping hell here
-
+# @TODO: this is extremely convoluted and shall be remade into a separate on-disk script with trap for user-abort (Ctrl-C)
+# @TODO: until then beware 1) escaping hell 2) the fact set -e is _not_ in effect inside the -c and 3) dont press Ctrl-C when running lol
 # @TODO: allow further customization of the mkosi command line
+docker_opts+=(
+	"/bin/bash"
+	"-c"
+	"set -x; declare result=66; /usr/local/bin/mkosi --version && bash pre_mkosi.sh && chown ${UID} -R /work /out /cache && ${real_cmd} && bash post_mkosi.sh && result=0; chown ${UID} -R /work /out /cache; exit \$result"
+)
 
 # Run the docker command, and thus, mkosi
 log info "Running mkosi under Docker..."
