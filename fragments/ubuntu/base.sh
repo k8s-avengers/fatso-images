@@ -121,8 +121,12 @@ function mkosi_script_postinst_chroot::980_ubuntu_late_fixes() {
 	# Remove Canonical's ads # @TODO insert our own image ID and such
 	rm -fv /etc/update-motd.d/10-help-text /etc/update-motd.d/50-motd-news
 
+	log info "Late apt update / apt upgrade to guarantee package up-to-dateness even if mkosi incremental cache used..."
+	apt-get -o "DPkg::Use-Pty=false" -y update
+	apt-get -o "DPkg::Use-Pty=false" -y full-upgrade
+
 	# Clean apt cache (debs)
-	apt -y clean
+	apt -o "DPkg::Use-Pty=false" -y clean
 }
 
 function mkosi_script_finalize_chroot::980_ubuntu_late_fixes() {
