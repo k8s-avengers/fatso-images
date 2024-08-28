@@ -16,9 +16,24 @@ function log() {
 
 function install_dependencies() {
 	declare -a debian_pkgs=()
-	[[ ! -f /usr/bin/jq ]] && debian_pkgs+=("jq")
-	[[ ! -f /usr/bin/pigz ]] && debian_pkgs+=("pigz")
-	[[ ! -f /usr/bin/crudini ]] && debian_pkgs+=("crudini")
+	declare -a brew_pkgs=()
+	declare -a pipx_pkgs=()
+
+	command -v pipx > /dev/null || {
+		brew_pkgs+=("pipx")
+	}
+	command -v jq > /dev/null || {
+		debian_pkgs+=("jq")
+		brew_pkgs+=("jq")
+	}
+	command -v pigz > /dev/null || {
+		debian_pkgs+=("pigz")
+		brew_pkgs+=("pigz")
+	}
+	command -v crudini > /dev/null || {
+		debian_pkgs+=("crudini")
+		pipx_pkgs+=("crudini")
+	}
 
 	# If more than zero entries in the array, install
 	if [[ ${#debian_pkgs[@]} -gt 0 ]]; then
@@ -27,11 +42,24 @@ function install_dependencies() {
 			log warn "Installing dependencies: ${debian_pkgs[*]}"
 			sudo apt -y update
 			sudo apt -y install "${debian_pkgs[@]}"
+		elif [[ "$(uname)" == "Darwin" ]]; then
+			log info "Skipping Debian deps installation for Darwin..."
 		else
 			log error "Don't know how to install the equivalent of Debian packages *on the host*: ${debian_pkgs[*]} -- teach me!"
 		fi
 	else
-		log info "All deps found, no installs necessary on host."
+		log info "All deps found, no apt installs necessary on host."
+	fi
+
+	if [[ "$(uname)" == "Darwin" ]]; then
+		if [[ ${#debian_pkgs[@]} -gt 0 ]]; then
+			log info "Detected Darwin, assuming 'brew' is available: running 'brew install ${brew_pkgs[*]}'"
+			brew install "${brew_pkgs[@]}"
+		fi
+		if [[ ${#pipx_pkgs[@]} -gt 0 ]]; then
+			log info "Detected Darwin, assuming 'pipx' is available: running 'pipx install ${pipx_pkgs[*]}'"
+			pipx install "${pipx_pkgs[@]}"
+		fi
 	fi
 
 	return 0 # there's a shortcircuit above
