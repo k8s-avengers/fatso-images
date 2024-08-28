@@ -113,7 +113,7 @@ function mkosi_script_postinst_chroot::010_ubuntu_early_fixes() {
 
 function mkosi_script_postinst_chroot::160_ubuntu_early_apt_get_update() {
 	# update package lists so apt is ready-to-go when image deployed
-	apt-get -y update
+	apt-get -o "DPkg::Use-Pty=false" -y update --error-on=any
 }
 
 function mkosi_script_postinst_chroot::980_ubuntu_late_fixes() {
