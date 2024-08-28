@@ -28,7 +28,8 @@ function config_mkosi_post::ubuntu_grub() {
 		Type=root
 		Format=ext4
 		CopyFiles=/
-		Minimize=guess
+		Minimize=off
+		SizeMinBytes=8192M
 		GrowFileSystem=on
 	REPART_ROOT
 
