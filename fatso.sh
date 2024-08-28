@@ -200,9 +200,9 @@ declare -g -r BUILDER_IMAGE_REF="fatso-builder-${BUILDER}:local"
 
 log info "Building builder image '${BUILDER_IMAGE_REF}'"
 declare -a docker_build_args=()
-docker_build_args+=("--build-arg" "PROXY_NO_PROXY=${no_proxy}")       # repass env var as ARG; will be set into ENVs by Dockerfile
-docker_build_args+=("--build-arg" "PROXY_HTTP_PROXY=${http_proxy}")   # repass env var as ARG; will be set into ENVs by Dockerfile
-docker_build_args+=("--build-arg" "PROXY_HTTPS_PROXY=${https_proxy}") # repass env var as ARG; will be set into ENVs by Dockerfile
+docker_build_args+=("--build-arg" "PROXY_NO_PROXY=${no_proxy:-"${NO_PROXY}"}")          # repass env var as ARG; will be set into ENVs by Dockerfile
+docker_build_args+=("--build-arg" "PROXY_HTTP_PROXY=${http_proxy:-"${HTTP_PROXY}"}")    # repass env var as ARG; will be set into ENVs by Dockerfile
+docker_build_args+=("--build-arg" "PROXY_HTTPS_PROXY=${https_proxy:-"${HTTPS_PROXY}"}") # repass env var as ARG; will be set into ENVs by Dockerfile
 log info "Building builder image with docker build options: ${docker_build_args[*]}"
 
 (
@@ -228,9 +228,9 @@ mkosi_opts+=("--workspace-dir=/cache/workspace")    # mapped below
 # Attention: /cache/extra is available, but not mapped to mkosi; use it for pre/post scripts only
 
 # if http_proxy is set, pass it to mkosi via --proxy-url
-if [[ -n "${http_proxy}" ]]; then
-	log info "http_proxy is set, passing it to mkosi via --proxy-url (${http_proxy})"
-	mkosi_opts+=("--proxy-url=${http_proxy}")
+if [[ -n "${http_proxy:-"${HTTP_PROXY}"}" ]]; then
+	log info "http_proxy is set, passing it to mkosi via --proxy-url (${http_proxy:-"${HTTP_PROXY}"})"
+	mkosi_opts+=("--proxy-url=${http_proxy:-"${HTTP_PROXY}"}")
 else
 	log debug "http_proxy is not set, skipping --proxy-url"
 fi
