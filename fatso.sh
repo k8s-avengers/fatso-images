@@ -200,7 +200,9 @@ declare -g -r BUILDER_IMAGE_REF="fatso-builder-${BUILDER}:local"
 
 log info "Building builder image '${BUILDER_IMAGE_REF}'"
 declare -a docker_build_args=()
-docker_build_args+=("--progress=plain")  # plain logs under buildx
+if [[ ${DOCKER_HAS_BUILDX} -gt 0 ]]; then # global; set by common's check_docker_daemon_for_sanity() to 1 if buildx is detected (via docker info)
+	docker_build_args+=("--progress=plain")  # plain logs under buildx
+fi
 
 docker_build_args+=("--build-arg" "PROXY_NO_PROXY=${no_proxy:-"${NO_PROXY}"}")          # repass env var as ARG; will be set into ENVs by Dockerfile
 docker_build_args+=("--build-arg" "PROXY_HTTP_PROXY=${http_proxy:-"${HTTP_PROXY}"}")    # repass env var as ARG; will be set into ENVs by Dockerfile

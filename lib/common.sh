@@ -52,6 +52,10 @@ function check_docker_daemon_for_sanity() {
 
 	if [[ -z "${docker_buildx_version}" ]]; then
 		log info "'docker info' indicates there's no buildx installed."
+		declare -g -r -i DOCKER_HAS_BUILDX=0
+	else
+		log info "'docker info' indicates there's buildx installed."
+		declare -g -r -i DOCKER_HAS_BUILDX=1
 	fi
 
 	# Once we know docker is sane, hook up a function that helps us trace invocations.
