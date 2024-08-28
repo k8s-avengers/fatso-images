@@ -221,11 +221,18 @@ if [[ "${DEBUG_MKOSI}" == "yes" ]]; then
 	mkosi_opts+=("--debug")
 fi
 mkosi_opts+=("--output-dir=/out")                   # mapped below
-mkosi_opts+=("--cache-dir=/cache/incremental")      # mapped below
-mkosi_opts+=("--incremental")                       # mapped below
 mkosi_opts+=("--package-cache-dir=/cache/packages") # mapped below
 mkosi_opts+=("--workspace-dir=/cache/workspace")    # mapped below
 # Attention: /cache/extra is available, but not mapped to mkosi; use it for pre/post scripts only
+
+# The incremental cache speeds up rebuilds, eg, for development.
+# It has the _very_ unfortunate downside of not-checking pkg versions, only names; thus critical security fixes might be missed.
+# It is highly recommended to use a fragment to apt upgrade / yum upgrade forcibly to guarantee pkgs are up-to-date.
+# Also, depending on the CI pipeline runners setup, if jobs land on random runners, this only causes disk usage and churn.
+if [[ "${INCREMENTAL_CACHE:-"no"}" == "yes" ]]; then # thus set INCREMENTAL_CACHE=no to skip it
+	mkosi_opts+=("--cache-dir=/cache/incremental")      # mapped below
+	mkosi_opts+=("--incremental")                       # mapped below
+fi
 
 # if http_proxy is set, pass it to mkosi via --proxy-url
 if [[ -n "${http_proxy:-"${HTTP_PROXY}"}" ]]; then
@@ -265,7 +272,7 @@ docker_opts+=("/bin/bash" "-c" "/usr/local/bin/mkosi --version && bash pre_mkosi
 
 # Run the docker command, and thus, mkosi
 log info "Running mkosi under Docker..."
-log debug "Running docker with: ${docker_opts[*]}"
+log info "Running docker with: ${docker_opts[*]}"
 docker "${docker_opts[@]}"
 
 log info "Done building using mkosi! ${FLAVOR}"
