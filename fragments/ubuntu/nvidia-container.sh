@@ -34,8 +34,11 @@ function mkosi_script_postinst_chroot::600_nvidia_ctk_install() {
 	cp -v /etc/containerd/config.toml /etc/containerd/config.toml.orig.pre-nvidia-nct
 
 	# Configure containerd for the nvidia runtime
-	log info "Configuring containerd for nvidia AS DEFAULT..."
-	nvidia-ctk runtime configure --runtime=containerd --set-as-default
+	log info "Configuring containerd for nvidia, but NOT as default..."
+	nvidia-ctk runtime configure --runtime=containerd
+
+	# log info "Configuring containerd for nvidia AS DEFAULT..."
+	# No. nvidia's runtimeClass breaks libpthread-based applications, rendering GPU nodes unusable for almost anything else.
 	#nvidia-ctk runtime configure --runtime=containerd # non-default version, requires "runtimeClassName: nvidia" on every pod that touches GPU, incompatible with GPU Operator (from Helm)
 
 	# # Show the differences between the new config and the copy
@@ -44,6 +47,9 @@ function mkosi_script_postinst_chroot::600_nvidia_ctk_install() {
 	# batcat --paging=never --force-colorization --wrap auto --terminal-width 80 --theme=Dracula --language=diff --file-name "containerd config.toml diff after nvidia-ctk" toml.diff
 	# cat toml.diff
 	# rm -f toml.diff
+
+	# Keep a good copy in case nvidia-operator decides to frak up later
+	cp -v /etc/containerd/config.toml /etc/containerd/config.toml.orig.with.nvidia
 
 	# Hold the nvidia_ctk packages
 	log info "Holding nvidia-container-toolkit..."
