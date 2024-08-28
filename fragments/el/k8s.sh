@@ -26,8 +26,11 @@ function mkosi_script_finalize_chroot::k8s_kubelet_enable() {
 }
 
 function mkosi_script_postinst_chroot::selinux_permissive() {
-	log info "Setting SELINUX to permissive...."
-	# setenforce 0 || true
-	sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-	cat /etc/selinux/config
+	if [[ -f /etc/selinux/config ]]; then
+		log info "Setting SELINUX to permissive...."
+		sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+		cat /etc/selinux/config
+	else
+		log warn "Cant make SELINUX permissive sans /etc/selinux/config"
+	fi
 }
