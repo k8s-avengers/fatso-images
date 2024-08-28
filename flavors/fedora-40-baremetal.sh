@@ -21,3 +21,14 @@ declare -g -a FLAVOR_FRAGMENTS=(
 	"el/k8s"
 	"el/cloud"
 )
+
+# "Inline" fragment functions!
+function config_mkosi_pre::fedora_standard_fedora_kernel() {
+	log info "Adding Fedora standard kernel package"
+	mkosi_config_add_rootfs_packages "kernel"
+}
+
+function config_mkosi_pre::fedora_baremetal_pkgs() {
+	log info "Adding Fedora pkgs for baremetal (firmware, microcode, usbutils)"
+	mkosi_config_add_rootfs_packages "microcode_ctl" "linux-firmware" "usbutils"
+}
