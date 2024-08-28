@@ -74,6 +74,7 @@ function config_mkosi_post::100_ubuntu_base_distro() {
 	mkosi_conf_config_value "Distribution" "Distribution" "ubuntu"
 	mkosi_conf_config_value "Distribution" "Release" "noble"
 	mkosi_conf_config_value "Distribution" "Repositories" "main,restricted,universe,multiverse"
+	mkosi_conf_config_value "Distribution" "Mirror" "http://archive.ubuntu.com/ubuntu"
 	mkosi_conf_finish_edit "base"
 }
 
