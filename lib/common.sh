@@ -20,16 +20,18 @@ function install_dependencies() {
 	[[ ! -f /usr/bin/pigz ]] && debian_pkgs+=("pigz")
 	[[ ! -f /usr/bin/crudini ]] && debian_pkgs+=("crudini")
 
-	# If running on Debian or Ubuntu...
-	if [[ -f /etc/debian_version ]]; then
-		# If more than zero entries in the array, install
-		if [[ ${#debian_pkgs[@]} -gt 0 ]]; then
+	# If more than zero entries in the array, install
+	if [[ ${#debian_pkgs[@]} -gt 0 ]]; then
+		# If running on Debian or Ubuntu...
+		if [[ -f /etc/debian_version ]]; then
 			log warn "Installing dependencies: ${debian_pkgs[*]}"
 			sudo apt -y update
 			sudo apt -y install "${debian_pkgs[@]}"
+		else
+			log error "Don't know how to install the equivalent of Debian packages *on the host*: ${debian_pkgs[*]} -- teach me!"
 		fi
 	else
-		log error "Don't know how to install the equivalent of Debian packages: ${debian_pkgs[*]} -- teach me!"
+		log info "All deps found, no installs necessary on host."
 	fi
 
 	return 0 # there's a shortcircuit above
