@@ -23,6 +23,7 @@ jobs:
           - { id: "fedora-40-baremetal", env: { } }
           - { id: "ubuntu-noble-baremetal-workstation", env: { } }
           - { id: "ubuntu-noble-hyperv-cloud-k8s", env: { } }
+          - { id: "ubuntu-noble-harbor", env: { } }
     name: "${{ matrix.id }}"
     steps:
       - name: cleanup GHA hosted runner
