@@ -4,12 +4,16 @@ function config_mkosi_pre::ubuntu_grub() {
 	declare -a pkgs=(
 		"grub-efi"        # for EFI
 		"grub-common"     # for grub-mkimage/update-grub etc
-		"grub-ipxe"       # a simple way to have an iPXE fallback from grub menu
 		"os-prober"       # for grub-mkconfig to detect other OSes
 		"efibootmgr"      # for managing EFI boot entries / boot order etc
 		"initramfs-tools" # should be brought in by kernel deps, but better to be explicit
 	)
 	mkosi_config_add_rootfs_packages "${pkgs[@]}"
+
+	if is_element_in_array "ubuntu/base" "${FLAVOR_FRAGMENTS[@]}"; then
+		log info "Building Ubuntu, which carries 'grub-ipxe' package; adding it." # not for Debian
+		mkosi_config_add_rootfs_packages "grub-ipxe"                              # a simple way to have an iPXE fallback from grub menu; really just convenience
+	fi
 }
 
 function config_mkosi_post::ubuntu_grub() {
