@@ -47,6 +47,15 @@ jobs:
           username: ${{ github.repository_owner }} # GitHub username or org
           password: ${{ secrets.GITHUB_TOKEN }}    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: GitHub Actions Cache for 'cache' dir
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: "mkosi-cache-${{matrix.id}}-${{hashFiles('assets/**/*', 'flavors/**/*', 'fragments/**/*', 'lib/**/*', 'fatso.sh')}}"
+          restore-keys: |
+            mkosi-cache-${{matrix.id}}
+          save-always: true # always save the cache, even if build fails
+
       - name: Actually process ${{matrix.id}}
         id: buildimage
         env: ${{ matrix.env }} # this gets combined with the job-wide env's like BASE_OCI_REF
