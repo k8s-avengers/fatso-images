@@ -20,4 +20,22 @@ function mkosi_script_post_mkosi_host::output_vhdx() {
 	rm -vf "${temp_qcow2_image}"                                                                     # remove the temporary large qcow2, free space
 	log info "output_vhdx: Done converting image to VHDX format"
 	qemu-img info "${full_file_vhdx}" # show info
+
+	# Hack: if running under GitHub actions, further compress the .vhdx into .vhdx.gz so it fits in GitHub releases (2Gb limit)
+	log info "output_vhdx: Checking if running under GitHub Actions: GITHUB_OUTPUT: ${GITHUB_OUTPUT}"
+	if [[ "x${GITHUB_OUTPUT}x" != "xx" ]]; then
+		declare -r full_file_vhdx_gz="${full_file_vhdx}.gz"
+		log info "output_vhdx: Compressing VHDX image to VHDX.GZ for GitHub Actions"
+		pigz -1 "${full_file_vhdx}"
+		log info "output_vhdx: Done compressing VHDX image to VHDX.GZ for GitHub Actions"
+
+		# If full_file_vhdx_gz is larger than 2Gb exactly, log an error, delete the file, but do not error out
+		declare -i size_vhdx_gz_bytes
+		size_vhdx_gz_bytes=$(stat --format="%s" "${full_file_vhdx_gz}")
+		if [[ ${size_vhdx_gz_bytes} -gt 2147483648 ]]; then
+			log error "output_vhdx: Compressed VHDX image is larger than 2Gb, GitHub Actions will not accept it. Deleting ${full_file_vhdx_gz}"
+			rm -vf "${full_file_vhdx_gz}"
+		fi
+	fi
+
 }
