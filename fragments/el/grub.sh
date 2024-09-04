@@ -42,9 +42,12 @@ function config_mkosi_post::el_grub_ext4_repart() {
 		GrowFileSystem=on
 	REPART_ROOT
 
+	# Handled by common_base
+	log warn "Setting up mkosi to use ext4 without orphan_file"
+	MKOSI_CONTENT_ENVIRONMENT["SYSTEMD_REPART_MKFS_OPTIONS_EXT4"]="-O ^orphan_file"
+
 	mkosi_conf_begin_edit "grub"
 	mkosi_conf_config_value "Output" "RepartDirectories" "repart.grub" # defined above above
-	mkosi_conf_config_value "Content" "Environment" "SYSTEMD_REPART_MKFS_OPTIONS_EXT4=\"-O ^orphan_file\""
 	mkosi_conf_finish_edit "grub"
 
 	# _also_ write the cmdline to the grub config (mkosi itself uses the KernelCommandLine= set by common_bootable)

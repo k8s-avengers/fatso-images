@@ -16,7 +16,7 @@ ADD builder_dockerfile_early.sh /extra-dockerfile/builder_dockerfile_early.sh
 RUN bash -e /extra-dockerfile/builder_dockerfile_early.sh
 
 # Yes, this has a huge dependency tree. Hopefully you won't cache miss this too often; reduce your usage of early fragments.
-RUN apt-get -o "DPkg::Use-Pty=false" update --error-on=any && apt-get -o "DPkg::Use-Pty=false" install -y --no-install-recommends --no-install-suggests jq wget curl tree reprepro xfsprogs git kmod dpkg-dev devscripts grub-efi cpio mtools qemu-utils python3-cryptography python3-pefile bubblewrap systemd systemd-container python3:any dosfstools
+RUN apt-get -o "DPkg::Use-Pty=false" update --error-on=any && apt-get -o "DPkg::Use-Pty=false" install -y --no-install-recommends --no-install-suggests pigz jq wget curl tree reprepro xfsprogs git kmod dpkg-dev devscripts grub-efi cpio mtools qemu-utils python3-cryptography python3-pefile bubblewrap systemd systemd-container python3:any dosfstools
 
 WORKDIR /cache/packages
 WORKDIR /out
@@ -46,6 +46,7 @@ RUN bash -e /extra-dockerfile/builder_dockerfile_late.sh
 
 VOLUME /cache/packages
 VOLUME /out
+VOLUME /dist
 VOLUME /work
 
 # Important!

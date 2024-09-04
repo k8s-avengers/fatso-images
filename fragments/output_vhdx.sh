@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
 
 function config_mkosi_init::output_vhdx() {
-	declare -g -a BUILDER_FRAGMENTS_LATE # global
-	BUILDER_FRAGMENTS_LATE+=("output_vhdx")
-
-	# Tell the builder we'll be changing things; make them read-only to avoid other fragments to conflict
-	declare -r -g OUTPUT_IMAGE_FILE_RAW="${OUTPUT_DIR}/image.vhdx"
-	declare -r -g -r DIST_FILE_IMG_RAW_GZ="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.vhdx.gz"
+	log info "output_vhdx: Compressed output image will be VHDX subformat=dynamic, with extra 5Gb"
 }
 
 function mkosi_script_post_mkosi_host::output_vhdx() {
-	log info "output_vhdx: Converting image to VHDX format, with qcow2 intermediary"
+	: "${IMAGE_FLAVOR_VERSION_ID:?IMAGE_FLAVOR_VERSION_ID is not set, cannot continue.}" # set by common_base
+
+	declare -r full_file_vhdx="/dist/${IMAGE_FLAVOR_VERSION_ID}.vhdx"
+	log info "output_vhdx: VHDX output image will be ${full_file_vhdx}"
+
+	log info "output_vhdx: Converting image to VHDX format, using qcow2 intermediary"
 	declare original_raw_image="/out/image.raw"
-	declare temp_qcow2_image="/out/image_temp.qcow2"
-	declare full_file_vhdx="/out/image.vhdx"
+	declare temp_qcow2_image="/out/image.qcow2"
 	qemu-img convert -f raw -O qcow2 "${original_raw_image}" "${temp_qcow2_image}"
 	rm -vf "${original_raw_image}"                                                                   # free up space
 	qemu-img resize "${temp_qcow2_image}" +5G                                                        # resize the temporary

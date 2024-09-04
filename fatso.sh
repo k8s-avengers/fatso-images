@@ -101,20 +101,9 @@ declare -g -r OUTPUT_DIR="out/flavors/${FLAVOR}"
 rm -rf "${OUTPUT_DIR}"
 mkdir -p "${OUTPUT_DIR}"
 
-declare -g OUTPUT_IMAGE_FILE_RAW="${OUTPUT_DIR}/image.raw"
-declare -g OUTPUT_MANIFEST_FILE_RAW="${OUTPUT_DIR}/image.manifest"
-
-# Prepare dist dist (final output dir)
+# Prepare dist dist (final output dir, for eg compressed, versioned, converted after mkosi is done; see output_xxx fragments and common_base)
 declare -g -r DIST_DIR="dist"
 mkdir -p "${DIST_DIR}"
-declare -g DIST_FILE_IMG_RAW_GZ="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.img.gz"
-declare -g DIST_FILE_MANIFEST_JSON="${DIST_DIR}/${FLAVOR}-v${IMAGE_VERSION}.manifest.json"
-
-# Log the original expected locations; might be changed by config fragments
-log info "(initial) Expecting output image at ${OUTPUT_IMAGE_FILE_RAW}"
-log info "(initial) Expecting output manifest JSON ${OUTPUT_MANIFEST_FILE_RAW}"
-log info "(initial) Distribution image file will be at ${DIST_FILE_IMG_RAW_GZ}"
-log info "(initial) Distribution manifest file will be at ${DIST_FILE_MANIFEST_JSON}"
 
 ####################################################################################################################################################################################
 
@@ -149,11 +138,6 @@ run_fragment_implementations "config_mkosi_pre"
 run_fragment_implementations "config_mkosi_post"
 
 log info "Done with configuration part"
-
-log info "(final) Expecting output image at ${OUTPUT_IMAGE_FILE_RAW}"
-log info "(final) Expecting output manifest JSON ${OUTPUT_MANIFEST_FILE_RAW}"
-log info "(final) Distribution image file will be at ${DIST_FILE_IMG_RAW_GZ}"
-log info "(final) Distribution manifest file will be at ${DIST_FILE_MANIFEST_JSON}"
 
 ####################################################################################################################################################################################
 
@@ -263,6 +247,7 @@ docker_opts+=("run" "--rm")
 docker_opts+=("--privileged")      # Couldn't make it work without this.
 docker_opts+=("-v" "${SCRIPT_DIR}/${WORK_DIR}:/work")
 docker_opts+=("-v" "${SCRIPT_DIR}/${OUTPUT_DIR}:/out")
+docker_opts+=("-v" "${SCRIPT_DIR}/${DIST_DIR}:/dist")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_INCREMENTAL}:/cache/incremental")
 docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_WORKSPACE}:/cache/workspace")
@@ -279,7 +264,7 @@ log info "Real mkosi invocation: ${real_cmd}"
 docker_opts+=(
 	"/bin/bash"
 	"-c"
-	"set -x; declare result=66; /usr/local/bin/mkosi --version && bash pre_mkosi.sh && chown ${UID} -R /work /out /cache && ${real_cmd} && bash post_mkosi.sh && result=0; chown ${UID} -R /work /out /cache; exit \$result"
+	"if [[ -f /work/mkosi.env.exports.sh ]] then source /work/mkosi.env.exports.sh; fi; declare result=66; /usr/local/bin/mkosi --version && bash pre_mkosi.sh && chown ${UID} -R /work /out /cache /dist && ${real_cmd} && bash post_mkosi.sh && result=0; chown ${UID} -R /work /out /cache /dist; exit \$result"
 )
 
 # Run the docker command, and thus, mkosi
@@ -290,27 +275,6 @@ docker "${docker_opts[@]}"
 log info "Done building using mkosi! ${FLAVOR}"
 
 ####################################################################################################################################################################################
-# If found, copy the manifest file to the dist dir
-if [[ -f "${OUTPUT_MANIFEST_FILE_RAW}" ]]; then
-	cp "${OUTPUT_MANIFEST_FILE_RAW}" "${DIST_FILE_MANIFEST_JSON}"
-	log info "Output JSON manifest ${DIST_FILE_MANIFEST_JSON}"
-fi
 
-declare size_orig_human size_compress_human
-# get a human representation of the size, use "du -h"
-size_orig_human=$(du --si "${OUTPUT_IMAGE_FILE_RAW}" | cut -f 1)
-log info "Output image ${OUTPUT_IMAGE_FILE_RAW} size ${size_orig_human}"
-
-if [[ -n "${COPY_IMAGE_TO}" ]]; then
-	log info "COPY_IMAGE_TO='${COPY_IMAGE_TO}' thus copying OUTPUT_IMAGE_FILE_RAW='${OUTPUT_IMAGE_FILE_RAW}' there..."
-	cp -v "${OUTPUT_IMAGE_FILE_RAW}" "${COPY_IMAGE_TO}/"
-else
-	# @TODO this would be much better done by interface/impl; not everyone wants .gz
-	# Compress the image from OUTPUT_IMAGE_FILE_RAW to DIST_FILE_IMG_RAW_GZ, using pigz
-	log info "Compressing image to ${DIST_FILE_IMG_RAW_GZ}"
-	pigz -1 -c "${OUTPUT_IMAGE_FILE_RAW}" > "${DIST_FILE_IMG_RAW_GZ}"
-	size_compress_human=$(du --si "${DIST_FILE_IMG_RAW_GZ}" | cut -f 1)
-	log info "Done compressing image to ${DIST_FILE_IMG_RAW_GZ} from ${size_orig_human} to ${size_compress_human}."
-fi
 
 log info "Distribution done."

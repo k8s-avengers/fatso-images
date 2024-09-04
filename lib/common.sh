@@ -26,10 +26,6 @@ function install_dependencies() {
 		debian_pkgs+=("jq")
 		brew_pkgs+=("jq")
 	}
-	command -v pigz > /dev/null || {
-		debian_pkgs+=("pigz")
-		brew_pkgs+=("pigz")
-	}
 	command -v crudini > /dev/null || {
 		debian_pkgs+=("crudini")
 		pipx_pkgs+=("crudini")
