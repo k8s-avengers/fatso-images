@@ -67,6 +67,9 @@ function do_docker_prepulls_for_args_internal() {
 		if [[ "${image_to_pull_with_possible_registry_prefix}" != "${img_with_version}" ]]; then
 			log info "Retagging ${image_to_pull_with_possible_registry_prefix} to ${img_with_version}..."
 			docker tag "${image_to_pull_with_possible_registry_prefix}" "${img_with_version}"
+
+			# .. and get rid of the prefixed image, since we don't need it anymore
+			docker rmi "${image_to_pull_with_possible_registry_prefix}"
 		else
 			log info "No need to retag ${image_to_pull_with_possible_registry_prefix} to ${img_with_version}..."
 		fi
