@@ -20,7 +20,7 @@ fragment_function_names_sanity_check
 check_docker_daemon_for_sanity
 
 declare -g -r FLAVOR="${1}"
-declare -g -r FLAVOR_DIR="flavors"
+declare -g -r FLAVOR_DIR="${SCRIPT_DIR}/flavors"
 declare -g -r FLAVOR_CONF="${FLAVOR_DIR}/${FLAVOR}.sh"
 
 # Check FLAVOR is set and FLAVOR_DIR exists and also the config file
