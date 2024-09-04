@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
-function config_mkosi_pre::cephadm_packages() {
-	log info "no other dependencies beyond docker"
+function config_mkosi_pre::cephadm_determine_ceph_apt_repos_available() {
+	# Only Debian (not Ubuntu) has upstream Ceph apt repos available.
+	# Prepare and set environment variable to be used postinst.
+	MKOSI_CONTENT_ENVIRONMENT["USE_CEPH_APT_REPOS"]="no"
+	if is_element_in_array "debian/base" "${FLAVOR_FRAGMENTS[@]}"; then
+		MKOSI_CONTENT_ENVIRONMENT["USE_CEPH_APT_REPOS"]="yes"
+	fi
 }
 
 function mkosi_script_postinst_chroot::deploy_cephadm() {
@@ -11,6 +16,17 @@ function mkosi_script_postinst_chroot::deploy_cephadm() {
 	# Use wget to download the cephadm script
 	wget --output-document=/usr/local/sbin/cephadm "${cephadm_script_url}"
 	chmod +x /usr/local/sbin/cephadm
+
+	# If available, deploy the upstream Ceph apt repos.
+	if [[ "${USE_CEPH_APT_REPOS}" == "yes" ]]; then
+		log info "Adding Ceph apt repos & deploying cephadm / ceph-common from apt packages."
+		/usr/local/sbin/cephadm add-repo --release reef
+		/usr/local/sbin/cephadm install             # installs cephadm itself from repos
+		/usr/local/sbin/cephadm install ceph-common # installs ceph-common (eg 'ceph' cli) from repos
+		rm -fv /usr/local/sbin/cephadm              # get rid of our locally installed on
+	else
+		log warn "No Ceph apt repos available for this distribution; using only cephadm containers, no apt packages."
+	fi
 
 	# @TODO how to obtain those from ceph/cephadm sources? don't wanna be maintaining this stuff
 	declare -a ceph_docker_images_with_version=(
@@ -24,17 +40,19 @@ function mkosi_script_postinst_chroot::deploy_cephadm() {
 		"quay.io/ceph/haproxy:2.3"
 		"grafana/promtail:2.4.0"
 	)
-	do_docker_prepulls_for_args "${ceph_docker_images_with_version[@]}"
+	#do_docker_prepulls_for_args "${ceph_docker_images_with_version[@]}"
 }
 
 function mkosi_script_postinst_chroot::helper_scripts() {
-	# Helper for running "cephadm shell ceph" -- which is slow, but works.
-	cat <<- 'CEPHADM_SHELL' > /usr/local/sbin/ceph
-		#!/usr/bin/env bash
-		echo "Running 'ceph $*' in cephadm shell... please wait." >&2
-		cephadm shell ceph "$@"
-	CEPHADM_SHELL
-	chmod +x -v /usr/local/sbin/ceph
+	if [[ "${USE_CEPH_APT_REPOS}" == "no" ]]; then
+		# Helper for running "cephadm shell ceph" -- which is slow, but works.
+		cat <<- 'CEPHADM_SHELL' > /usr/local/sbin/ceph
+			#!/usr/bin/env bash
+			echo "Running 'ceph $*' in cephadm shell... please wait." >&2
+			cephadm shell ceph "$@"
+		CEPHADM_SHELL
+		chmod +x -v /usr/local/sbin/ceph
+	fi
 
 	# @TODO hardcoded names and crap below
 
@@ -73,7 +91,7 @@ function mkosi_script_postinst_chroot::helper_scripts() {
 	cat <<- 'CEPHADM_DEPLOY_OSDS' > /usr/local/sbin/sample-ceph-deploy-osds
 		#!/usr/bin/env bash
 		echo "Deploying Ceph OSDs... please wait." >&2
-		
+
 		ceph orch host ls
 		ceph orch device ls
 		ceph orch apply osd --all-available-devices
