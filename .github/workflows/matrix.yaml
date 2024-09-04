@@ -17,13 +17,15 @@ jobs:
       fail-fast: false # let other jobs try to complete if one fails
       matrix:
         include:
-          - { id: "ubuntu-noble-baremetal-cloud-k8s-nvidia", env: { } }
-          - { id: "el-9-baremetal" , env: { } }
-          - { id: "el-9-hyperv" , env: { } }
-          - { id: "fedora-40-baremetal", env: { } }
-          - { id: "ubuntu-noble-baremetal-workstation", env: { } }
-          - { id: "ubuntu-noble-hyperv-cloud-k8s", env: { } }
-          - { id: "ubuntu-noble-harbor", env: { } }
+          - { id: "debian-cloud-ceph-hyperv", env: { } }
+          - { id: "ubuntu-cloud-ceph-hyperv", env: { } }
+          - { id: "ubuntu-cloud-harbor-hyperv", env: { } }
+          - { id: "ubuntu-cloud-k8s-baremetal-nvidia", env: { } }
+          - { id: "ubuntu-cloud-k8s-baremetal", env: { } }
+          - { id: "ubuntu-cloud-k8s-hyperv", env: { } }
+          - { id: "ubuntu-workstation-k8s-baremetal", env: { } }
+          - { id: "ubuntu-workstation-k8s-hyperv", env: { } }
+          # @TODO: el: rocky and fedora stuff
     name: "${{ matrix.id }}"
     steps:
       - name: cleanup GHA hosted runner

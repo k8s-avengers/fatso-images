@@ -4,9 +4,6 @@
 
 function config_mkosi_pre::000_apt_base() {
 	declare -a pkgs=(
-		# kernel et al
-		"linux-image-generic" # for the image and base modules
-
 		# a mess of other stuff, split later into better named fragments
 		"sudo" # for, well, sudo'ing
 

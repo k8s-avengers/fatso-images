@@ -3,6 +3,7 @@
 # Ubuntu: relies on apt/base being active
 
 function config_mkosi_pre::010_ubuntu_base() {
+	mkosi_config_add_rootfs_packages "linux-image-generic" # Ubuntu-specific; main image and modules (not headers etc)
 	mkosi_config_add_rootfs_packages "linux-tools-generic" # Ubuntu-specific; Debian ships separate packages for each kernel userspace tool.
 }
 
