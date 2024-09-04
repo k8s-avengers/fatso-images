@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 
 function config_mkosi_pre::docker_packages() {
-	log info "Adding docker.io packages; from Ubuntu upstream repos, not Docker's"
+	log info "Adding docker.io packages; from apt upstream repos, not Docker's"
 	mkosi_config_add_rootfs_packages "docker.io"
+
+	# HACK: if on Debian, we need to install apparmor as well, as its docker.io in practice depends on it.
+	if is_element_in_array "debian/base" "${FLAVOR_FRAGMENTS[@]}"; then
+		log warn "Debian's docker.io requires apparmor, adding it"
+		mkosi_config_add_rootfs_packages "apparmor"
+	fi
 }
 
 function mkosi_script_postinst_chroot::010_early_docker_registry_prefixes_init() {
