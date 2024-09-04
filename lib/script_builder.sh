@@ -31,6 +31,9 @@ function create_mkosi_script_from_fragments_specific() {
 	cat <<- EOD > "${full_fn}"
 		#!/usr/bin/env bash
 		set -e
+		#set -o nounset ## set -u : exit the script if you try to use an uninitialised variable
+		set -o errtrace # trace ERR through - enabled
+		set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
 		# <common.sh>
 		$(cat "lib/common.sh")
 		# </common.sh>
