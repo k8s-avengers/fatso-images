@@ -55,7 +55,7 @@ function create_mkosi_script_from_fragments_specific() {
 	eval "handled_fragments+=(\"\${${frag_var}[@]}\")" # ewww
 
 	for one_frag_file in "${handled_fragments[@]}"; do
-		log info "Including fragment '${one_frag_file}' into '${script_basename}' (via ${frag_var})"
+		log debug "Including fragment '${one_frag_file}' into '${script_basename}' (via ${frag_var})"
 		cat <<- EOD >> "${full_fn}"
 			log debug "fatso: starting '${script_basename}'; included fragment '${one_frag_file}'..."
 			$(cat "fragments/${one_frag_file}.sh")

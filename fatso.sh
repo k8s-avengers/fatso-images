@@ -7,6 +7,7 @@ set -o errexit  ## set -e : exit the script if any statement returns a non-true 
 
 source lib/common.sh
 source lib/fragments.sh
+source lib/inventory.sh
 source lib/mkosi_helpers.sh
 source lib/script_builder.sh
 
@@ -19,24 +20,57 @@ install_dependencies
 fragment_function_names_sanity_check
 check_docker_daemon_for_sanity
 
-declare -g -r FLAVOR="${1}"
 declare -g -r FLAVOR_DIR="${SCRIPT_DIR}/flavors"
-declare -g -r FLAVOR_CONF="${FLAVOR_DIR}/${FLAVOR}.sh"
 
-# Check FLAVOR is set and FLAVOR_DIR exists and also the config file
+# @TODO process all inventories...; is order relevant?
+for one_inventory in flavors/inventory_*.sh; do
+	log info "Processing inventory '${one_inventory}'..."
+	# shellcheck disable=SC1090 # dynamic sourcing, don't fret.
+	source "${one_inventory}"
+done
+
+declare -g -a all_final_flavors=()
+declare -g -A flavor_invocations=()
+process_inventories
+
+log warn "all_final_flavors=${all_final_flavors[*]}"
+
+declare -g -r FLAVOR="${1}"
+# If empty, bail.
 [[ -z "${FLAVOR}" ]] && log error "FLAVOR is not set; please pass it as 1st argument." && exit 1
-[[ ! -d "${FLAVOR_DIR}" ]] && log error "FLAVOR_DIR '${FLAVOR_DIR}' does not exist" && exit 1
-[[ ! -f "${FLAVOR_CONF}" ]] && log error "FLAVOR_CONF '${FLAVOR_CONF}' does not exist" && exit 1
+log info "Looking for flavor '${FLAVOR}'..."
+declare -g -r FLAVOR_INVOCATION="${flavor_invocations[${FLAVOR}]}"
+# if the flavor is not found, bail
+[[ -z "${FLAVOR_INVOCATION}" ]] && log error "Flavor '${FLAVOR}' not found in inventory" && exit 1
 
-# the rest of the arguments are extra fragments to include, handled below
-shift
+log info "Found flavor invocation: ${FLAVOR_INVOCATION}"
 
-# Source the FLAVOR_CONF
-# shellcheck disable=SC1090 # yeah you know dynamic sourcing
-source "${FLAVOR_CONF}"
+declare -g BASE_FLAVOR TARGET_FLAVOR VENDOR_FLAVOR # vars to be set by the invocation
+#### eval the invocation; this sets the variables BASE_FLAVOR, TARGET_FLAVOR, VENDOR_FLAVOR
+eval "${FLAVOR_INVOCATION}"
+declare -g -r BASE_FLAVOR TARGET_FLAVOR VENDOR_FLAVOR # make those read-only from now
+log info "FLAVOR=${FLAVOR} BASE_FLAVOR=${BASE_FLAVOR} TARGET_FLAVOR=${TARGET_FLAVOR} VENDOR_FLAVOR=${VENDOR_FLAVOR}"
 
-# Check BUILDER is set
-[[ -z "${BUILDER}" ]] && log error "BUILDER is not set" && exit 1
+# Prepare the variables that are to be set by the flavor functions.
+declare -g BUILDER BUILDER_CACHE_PKGS_ID FLAVOR_DISTRO
+declare -g -a FLAVOR_FRAGMENTS=()
+
+# Now run the flavor functions, beginning with the base, then the target, then the vendor.
+"flavor_base_${BASE_FLAVOR}"
+"flavor_target_${TARGET_FLAVOR}"
+"flavor_vendor_${VENDOR_FLAVOR}"
+
+log info "Done running flavor functions."
+log info "FLAVOR=${FLAVOR} BASE_FLAVOR=${BASE_FLAVOR} TARGET_FLAVOR=${TARGET_FLAVOR} VENDOR_FLAVOR=${VENDOR_FLAVOR}"
+log info "BUILDER=${BUILDER} BUILDER_CACHE_PKGS_ID=${BUILDER_CACHE_PKGS_ID} FLAVOR_DISTRO=${FLAVOR_DISTRO}"
+log info "FLAVOR_FRAGMENTS=${FLAVOR_FRAGMENTS[*]}"
+
+# Check they're all set, otherwise bail.
+[[ -z "${BUILDER}" ]] && log error "BUILDER is not set by flavor '${FLAVOR}'" && exit 1
+[[ -z "${BUILDER_CACHE_PKGS_ID}" ]] && log error "BUILDER_CACHE_PKGS_ID is not set by flavor '${FLAVOR}'" && exit 1
+[[ -z "${FLAVOR_DISTRO}" ]] && log error "FLAVOR_DISTRO is not set by flavor '${FLAVOR}'" && exit 1
+[[ ${#FLAVOR_FRAGMENTS[@]} -eq 0 ]] && log error "FLAVOR_FRAGMENTS is empty by flavor '${FLAVOR}'" && exit 1
+
 log info "FLAVOR=${FLAVOR} uses BUILDER=${BUILDER}"
 
 declare -g -r BUILDER_DIR="builders/${BUILDER}"
@@ -61,6 +95,8 @@ log info "BUILDER_DESCRIPTION=${BUILDER_DESCRIPTION}"
 [[ -z "${BUILDER_CACHE_PKGS_ID}" ]] && log error "BUILDER_CACHE_PKGS_ID is not set" && exit 1
 log info "BUILDER_CACHE_PKGS_ID=${BUILDER_CACHE_PKGS_ID}"
 
+# the rest of the arguments are extra fragments to include
+shift
 # Add extra cmdline arguments to FLAVOR_FRAGMENTS
 FLAVOR_FRAGMENTS+=("${@}")
 # Make it read-only from now
