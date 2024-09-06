@@ -8,7 +8,7 @@ jobs:
     env:
       BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      IMAGE_VERSION: "1011"
+      IMAGE_VERSION: "1012"
     permissions:
       packages: write # to write to ghcr.io
       contents: write # to commit to the repo
@@ -17,15 +17,20 @@ jobs:
       fail-fast: false # let other jobs try to complete if one fails
       matrix:
         include:
+          # apt debian/ubuntu stuff
           - { id: "debian-cloud-ceph-hyperv", env: { } }
           - { id: "ubuntu-cloud-ceph-hyperv", env: { } }
           - { id: "ubuntu-cloud-harbor-hyperv", env: { } }
-          - { id: "ubuntu-cloud-k8s-baremetal-nvidia", env: { } }
+          - { id: "ubuntu-cloud-k8s-nvidia-baremetal", env: { } }
           - { id: "ubuntu-cloud-k8s-baremetal", env: { } }
           - { id: "ubuntu-cloud-k8s-hyperv", env: { } }
           - { id: "ubuntu-workstation-k8s-baremetal", env: { } }
           - { id: "ubuntu-workstation-k8s-hyperv", env: { } }
-          # @TODO: el: rocky and fedora stuff
+          # EL rocky/fedora stuff
+          - { id: "fedora-cloud-k8s-baremetal", env: { } }
+          - { id: "ubuntu-workstation-k8s-hyperv", env: { } }
+          - { id: "fedora-cloud-k8s-hyperv", env: { } }
+          - { id: "rocky-cloud-k8s-hyperv", env: { } }
     name: "${{ matrix.id }}"
     steps:
       - name: cleanup GHA hosted runner
