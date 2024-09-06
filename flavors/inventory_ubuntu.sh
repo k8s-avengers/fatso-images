@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 function flavor_base_ubuntu() {
+	declare -g -r FLAVOR_DISTRO_TYPE="apt"
 	declare -g -r FLAVOR_DISTRO="ubuntu"
 	declare -g -r BUILDER="ubuntu"
 	declare -g -r BUILDER_CACHE_PKGS_ID="ubuntu-noble"

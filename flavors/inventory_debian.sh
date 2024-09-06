@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 function flavor_base_debian() {
+	declare -g -r FLAVOR_DISTRO_TYPE="apt"
 	declare -g -r FLAVOR_DISTRO="debian"
 	declare -g -r BUILDER="ubuntu"
 	declare -g -r BUILDER_CACHE_PKGS_ID="debian-stable"

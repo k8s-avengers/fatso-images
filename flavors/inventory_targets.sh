@@ -7,29 +7,35 @@
 # "hyperv-rawgz"; implies .img.gz output file, and fragments adding the hyperv-daemons and such
 
 function flavor_target_baremetal() {
-	FLAVOR_FRAGMENTS+=(
-		"${FLAVOR_DISTRO}/baremetal" # this varies depending on the base flavor....?
-		"output_rawgz"
-	)
+	FLAVOR_FRAGMENTS+=("output_rawgz")
+	case "${FLAVOR_DISTRO_TYPE}" in
+		"apt") FLAVOR_FRAGMENTS+=("${FLAVOR_DISTRO}/baremetal") ;; # Varies per-distro
+		"el") FLAVOR_FRAGMENTS+=("el/baremetal") ;;                # Common across all EL
+		*) log warn "Unknown FLAVOR_DISTRO_TYPE: ${FLAVOR_DISTRO_TYPE} for baremetal target" ;;
+	esac
 }
 
 function flavor_target_hyperv() {
-	FLAVOR_FRAGMENTS+=(
-		"${FLAVOR_DISTRO}/hyperv" # hyperv support packages included in rootfs
-		"output_vhdx"             # output as VHDX
-	)
+	FLAVOR_FRAGMENTS+=("output_vhdx")
+	case "${FLAVOR_DISTRO_TYPE}" in
+		"apt") FLAVOR_FRAGMENTS+=("${FLAVOR_DISTRO}/hyperv") ;; # Varies per-distro
+		"el") FLAVOR_FRAGMENTS+=("el/hyperv") ;;                # Common across all EL
+		*) log warn "Unknown FLAVOR_DISTRO_TYPE: ${FLAVOR_DISTRO_TYPE} for hyperv target" ;;
+	esac
+}
+
+function flavor_target_hyperv-rawgz() {
+	FLAVOR_FRAGMENTS+=("output_rawgz")
+	case "${FLAVOR_DISTRO_TYPE}" in
+		"apt") FLAVOR_FRAGMENTS+=("${FLAVOR_DISTRO}/hyperv") ;; # Varies per-distro
+		"el") FLAVOR_FRAGMENTS+=("el/hyperv") ;;                # Common across all EL
+		*) log warn "Unknown FLAVOR_DISTRO_TYPE: ${FLAVOR_DISTRO_TYPE} for hyperv-rawgz target" ;;
+	esac
 }
 
 function flavor_target_qemu() {
 	FLAVOR_FRAGMENTS+=(
 		"apt/qemu-guest-agent" # qemu support packages included in rootfs
 		# "output_qcow2"   # output as qcow2 # @TODO not implemented yet
-	)
-}
-
-function flavor_target_hyperv-rawgz() {
-	FLAVOR_FRAGMENTS+=(
-		"${FLAVOR_DISTRO}/hyperv" # hyperv support packages included in rootfs
-		"output_rawgz"            # output as .img.gz
 	)
 }

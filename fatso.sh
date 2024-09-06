@@ -64,16 +64,16 @@ declare -g -r BASE_FLAVOR TARGET_FLAVOR VENDOR_FLAVOR # make those read-only fro
 log info "FLAVOR=${FLAVOR} BASE_FLAVOR=${BASE_FLAVOR} TARGET_FLAVOR=${TARGET_FLAVOR} VENDOR_FLAVOR=${VENDOR_FLAVOR}"
 
 # Prepare the variables that are to be set by the flavor functions.
-declare -g BUILDER BUILDER_CACHE_PKGS_ID FLAVOR_DISTRO
+declare -g BUILDER BUILDER_CACHE_PKGS_ID FLAVOR_DISTRO FLAVOR_DISTRO_TYPE
 declare -g -a FLAVOR_FRAGMENTS=()
 
 # Now run the flavor functions, beginning with the base, then the target, then the vendor.
 "flavor_base_${BASE_FLAVOR}"
 "flavor_target_${TARGET_FLAVOR}"
-"flavor_vendor_${VENDOR_FLAVOR}"
+[[ "x${VENDOR_FLAVOR}x" != "xx" ]] && "flavor_vendor_${VENDOR_FLAVOR}"
 
 log info "Done running flavor functions."
-log info "FLAVOR=${FLAVOR} BASE_FLAVOR=${BASE_FLAVOR} TARGET_FLAVOR=${TARGET_FLAVOR} VENDOR_FLAVOR=${VENDOR_FLAVOR}"
+log info "FLAVOR=${FLAVOR} FLAVOR_DISTRO_TYPE=${FLAVOR_DISTRO_TYPE} BASE_FLAVOR=${BASE_FLAVOR} TARGET_FLAVOR=${TARGET_FLAVOR} VENDOR_FLAVOR=${VENDOR_FLAVOR}"
 log info "BUILDER=${BUILDER} BUILDER_CACHE_PKGS_ID=${BUILDER_CACHE_PKGS_ID} FLAVOR_DISTRO=${FLAVOR_DISTRO}"
 log info "FLAVOR_FRAGMENTS=${FLAVOR_FRAGMENTS[*]}"
 
@@ -81,6 +81,7 @@ log info "FLAVOR_FRAGMENTS=${FLAVOR_FRAGMENTS[*]}"
 [[ -z "${BUILDER}" ]] && log error "BUILDER is not set by flavor '${FLAVOR}'" && exit 1
 [[ -z "${BUILDER_CACHE_PKGS_ID}" ]] && log error "BUILDER_CACHE_PKGS_ID is not set by flavor '${FLAVOR}'" && exit 1
 [[ -z "${FLAVOR_DISTRO}" ]] && log error "FLAVOR_DISTRO is not set by flavor '${FLAVOR}'" && exit 1
+[[ -z "${FLAVOR_DISTRO_TYPE}" ]] && log error "FLAVOR_DISTRO_TYPE is not set by flavor '${FLAVOR}'" && exit 1
 [[ ${#FLAVOR_FRAGMENTS[@]} -eq 0 ]] && log error "FLAVOR_FRAGMENTS is empty by flavor '${FLAVOR}'" && exit 1
 
 log info "FLAVOR=${FLAVOR} uses BUILDER=${BUILDER}"
