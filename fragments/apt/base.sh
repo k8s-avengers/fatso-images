@@ -63,7 +63,6 @@ function config_mkosi_pre::000_apt_base() {
 	mkosi_config_add_rootfs_packages "${pkgs[@]}"
 }
 
-
 function config_mkosi_post::990_ubuntu_base_render_pkgs() {
 	declare rootfs_packages_joined_by_comma="" # add the MKOSI_ROOTFS_PACKAGES array to the mkosi.conf
 	rootfs_packages_joined_by_comma="$(array_join_elements_by "," "${MKOSI_ROOTFS_PACKAGES[@]}")"
@@ -73,6 +72,14 @@ function config_mkosi_post::990_ubuntu_base_render_pkgs() {
 	mkosi_conf_finish_edit "packages"
 }
 
+function config_mkosi_post::apt_base_setup_grow_rootfs_at_runtime() {
+	log info "Setting up runtime systemd-repart to grow the rootfs to the full size of the disk."
+	mkosi_stdin_to_work_file "mkosi.extra/usr/lib/repart.d" "10-root.conf" <<- ROOTFS_REPART_GROW_FULL
+		[Partition]
+		Type=root
+	ROOTFS_REPART_GROW_FULL
+}
+
 function mkosi_script_postinst_chroot::010_ubuntu_early_fixes() {
 	export DEBIAN_FRONTEND=noninteractive
 	export HOME="/root" # No HOME is set otherwise, fix it
@@ -80,13 +87,6 @@ function mkosi_script_postinst_chroot::010_ubuntu_early_fixes() {
 	# locale fix
 	sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
 	locale-gen
-
-	# Config systemd repart to manage the rootfs on first boot
-	mkdir -p /usr/lib/repart.d
-	cat <<- EOD > /usr/lib/repart.d/10-root.conf
-		[Partition]
-		Type=root
-	EOD
 
 	# Let's setup an /etc/fstab so things are mounted and rootfs is grown
 	cat <<- EOD > /etc/fstab

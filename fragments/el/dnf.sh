@@ -23,15 +23,16 @@ function config_mkosi_post::990_el_dnf_base_render_pkgs() {
 	mkosi_conf_finish_edit "packages"
 }
 
-function mkosi_script_postinst_chroot::010_el_dnf_early_fixes() {
-	export HOME="/root" # No HOME is set otherwise, fix it
-
-	# Config systemd repart to manage the rootfs on first boot
-	mkdir -p /usr/lib/repart.d
-	cat <<- EOD > /usr/lib/repart.d/10-root.conf
+function config_mkosi_post::dnf_setup_grow_rootfs_at_runtime() {
+	log info "Setting up runtime systemd-repart to grow the rootfs to the full size of the disk."
+	mkosi_stdin_to_work_file "mkosi.extra/usr/lib/repart.d" "10-root.conf" <<- ROOTFS_REPART_GROW_FULL
 		[Partition]
 		Type=root
-	EOD
+	ROOTFS_REPART_GROW_FULL
+}
+
+function mkosi_script_postinst_chroot::010_el_dnf_early_fixes() {
+	export HOME="/root" # No HOME is set otherwise, fix it
 
 	# Let's setup an /etc/fstab so things are mounted and rootfs is grown
 	cat <<- EOD > /etc/fstab
