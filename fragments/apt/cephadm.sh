@@ -40,7 +40,7 @@ function mkosi_script_postinst_chroot::deploy_cephadm() {
 		"quay.io/ceph/haproxy:2.3"
 		"grafana/promtail:2.4.0"
 	)
-	#do_docker_prepulls_for_args "${ceph_docker_images_with_version[@]}"
+	do_docker_prepulls_for_args "${ceph_docker_images_with_version[@]}"
 }
 
 function mkosi_script_postinst_chroot::helper_scripts() {
