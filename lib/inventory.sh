@@ -20,7 +20,7 @@ function process_inventories() {
 	# shellcheck disable=SC2207 # Split
 	vendor_flavor_functions+=($(compgen -A function | grep "^flavor_vendor_" | sed -e 's/^flavor_vendor_//g' || true))
 	log debug "Found ${#vendor_flavor_functions[@]} vendor flavor functions: ${vendor_flavor_functions[*]}"
-	
+
 	# Combinatorics time! 🤓
 	for vendor_flavor in "${vendor_flavor_functions[@]}"; do
 		for base_flavor in "${base_flavor_functions[@]}"; do
@@ -30,13 +30,15 @@ function process_inventories() {
 					declare one_final_flavor="${base_flavor}-${target_flavor}"
 					all_final_flavors+=("${one_final_flavor}")
 					flavor_invocations["${one_final_flavor}"]="BASE_FLAVOR='${base_flavor}' TARGET_FLAVOR='${target_flavor}' VENDOR_FLAVOR=''"
+					flavor_possibilities_by_base["${base_flavor}"]+=" ${one_final_flavor}"
 					continue
 				fi
-
 				declare one_final_flavor="${vendor_flavor}-${base_flavor}-${target_flavor}"
 				all_final_flavors+=("${one_final_flavor}")
 				flavor_invocations["${one_final_flavor}"]="BASE_FLAVOR='${base_flavor}' TARGET_FLAVOR='${target_flavor}' VENDOR_FLAVOR='${vendor_flavor}'"
+				flavor_possibilities_by_base["${base_flavor}"]+=" ${one_final_flavor}"
 			done
+
 		done
 	done
 
@@ -52,4 +54,27 @@ function process_inventories() {
 
 	log debug "Found ${#all_final_flavors[@]} final flavors: ${all_final_flavors[*]}"
 
+}
+
+function show_possible_flavors_by_base() {
+	log info "Follows a list of possible flavors by base flavor:"
+
+	declare -a all_possible_base_flavors=("${!flavor_possibilities_by_base[@]}")
+	# sort array, wtf bash
+	declare all_base_flavors_to_sort=""
+	for base_flavor in "${all_possible_base_flavors[@]}"; do
+		all_base_flavors_to_sort+="${base_flavor}"$'\n'
+	done
+	declare -a sorted_base_flavors=()
+	# shellcheck disable=SC2207 # Split
+	sorted_base_flavors+=($(LC_ALL=C sort <<< "${all_base_flavors_to_sort}"))
+	all_possible_base_flavors=("${sorted_base_flavors[@]}")
+
+	declare base_flavor
+	for base_flavor in "${all_possible_base_flavors[@]}"; do
+		declare -a possibilities=()
+		# shellcheck disable=SC2206 # let it split
+		possibilities=(${flavor_possibilities_by_base["${base_flavor}"]})
+		log info "--> ${base_flavor} --> ${possibilities[*]}"
+	done
 }

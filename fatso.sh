@@ -31,17 +31,29 @@ done
 
 declare -g -a all_final_flavors=()
 declare -g -A flavor_invocations=()
+declare -g -A flavor_possibilities_by_base=()
 process_inventories
 
-log warn "all_final_flavors=${all_final_flavors[*]}"
-
 declare -g -r FLAVOR="${1}"
+
 # If empty, bail.
-[[ -z "${FLAVOR}" ]] && log error "FLAVOR is not set; please pass it as 1st argument." && exit 1
+if [[ -z "${FLAVOR}" ]]; then
+	log error "FLAVOR is not set; please pass it as 1st argument."
+	show_possible_flavors_by_base
+	log error "FLAVOR is not set; please pass it as 1st argument."
+	exit 1
+fi
+
 log info "Looking for flavor '${FLAVOR}'..."
 declare -g -r FLAVOR_INVOCATION="${flavor_invocations[${FLAVOR}]}"
+
 # if the flavor is not found, bail
-[[ -z "${FLAVOR_INVOCATION}" ]] && log error "Flavor '${FLAVOR}' not found in inventory" && exit 1
+if [[ -z "${FLAVOR_INVOCATION}" ]]; then
+	log error "Flavor '${FLAVOR}' not found in inventory"
+	show_possible_flavors_by_base
+	log error "Flavor '${FLAVOR}' not found in inventory"
+	exit 1
+fi
 
 log info "Found flavor invocation: ${FLAVOR_INVOCATION}"
 
