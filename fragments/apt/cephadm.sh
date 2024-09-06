@@ -9,6 +9,20 @@ function config_mkosi_pre::cephadm_determine_ceph_apt_repos_available() {
 	fi
 }
 
+# Limit the rootfs size by instructing the (image-runtime-side) systemd-repart
+# This should leave enough free space for an OSD partition using the main/OS disk
+# This overrides the 10-root.conf setup by base fragments.
+function config_mkosi_post::900_limit_runtime_size_of_rootfs() {
+	declare rootfs_grow_limit_gb=20
+	log info "Limiting the rootfs runtime grow max size to ${rootfs_grow_limit_gb}GB"
+	mkosi_stdin_to_work_file "mkosi.extra/usr/lib/repart.d" "10-root.conf" <<- ROOTFS_REPART_GROW_LIMIT_RUNTIME
+		[Partition]
+		Type=root
+		GrowFileSystem=on
+		SizeMaxBytes=$((rootfs_grow_limit_gb * 1024 * 1024 * 1024))
+	ROOTFS_REPART_GROW_LIMIT_RUNTIME
+}
+
 function mkosi_script_postinst_chroot::deploy_cephadm() {
 	declare -g CEPH_RELEASE="18.2.4"                                                              # See https://docs.ceph.com/en/latest/releases/
 	declare cephadm_script_url="https://download.ceph.com/rpm-${CEPH_RELEASE}/el9/noarch/cephadm" # ignore the "el9" in here; cephadm is a Python3 zip app
