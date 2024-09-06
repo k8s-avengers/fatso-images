@@ -8,7 +8,7 @@ jobs:
     env:
       BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      IMAGE_VERSION: "1012"
+      IMAGE_VERSION: "1013"
     permissions:
       packages: write # to write to ghcr.io
       contents: write # to commit to the repo
@@ -28,8 +28,8 @@ jobs:
           - { id: "ubuntu-workstation-k8s-hyperv", env: { } }
           # EL rocky/fedora stuff
           - { id: "fedora-cloud-k8s-baremetal", env: { } }
-          - { id: "ubuntu-workstation-k8s-hyperv", env: { } }
           - { id: "fedora-cloud-k8s-hyperv", env: { } }
+          - { id: "rocky-cloud-k8s-baremetal", env: { } }
           - { id: "rocky-cloud-k8s-hyperv", env: { } }
     name: "${{ matrix.id }}"
     steps:
