@@ -18,19 +18,19 @@ jobs:
       matrix:
         include:
           # apt debian/ubuntu stuff
-          - { id: "debian-cloud-ceph-hyperv", env: { } }
-          - { id: "ubuntu-cloud-ceph-hyperv", env: { } }
-          - { id: "ubuntu-cloud-harbor-hyperv", env: { } }
+          - { id: "debian-cloud-ceph-qemu", env: { } }
+          - { id: "ubuntu-cloud-ceph-qemu", env: { } }
+          - { id: "ubuntu-cloud-harbor-qemu", env: { } }
           - { id: "ubuntu-cloud-k8s-nvidia-baremetal", env: { } }
           - { id: "ubuntu-cloud-k8s-baremetal", env: { } }
-          - { id: "ubuntu-cloud-k8s-hyperv", env: { } }
+          - { id: "ubuntu-cloud-k8s-qemu", env: { } }
           - { id: "ubuntu-workstation-k8s-baremetal", env: { } }
-          - { id: "ubuntu-workstation-k8s-hyperv", env: { } }
+          - { id: "ubuntu-workstation-k8s-qemu", env: { } }
           # EL rocky/fedora stuff
           - { id: "fedora-cloud-k8s-baremetal", env: { } }
-          - { id: "fedora-cloud-k8s-hyperv", env: { } }
+          - { id: "fedora-cloud-k8s-qemu", env: { } }
           - { id: "rocky-cloud-k8s-baremetal", env: { } }
-          - { id: "rocky-cloud-k8s-hyperv", env: { } }
+          - { id: "rocky-cloud-k8s-qemu", env: { } }
     name: "${{ matrix.id }}"
     steps:
       - name: cleanup GHA hosted runner
