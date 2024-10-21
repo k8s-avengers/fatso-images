@@ -34,8 +34,6 @@ function flavor_target_hyperv-rawgz() {
 }
 
 function flavor_target_qemu() {
-	FLAVOR_FRAGMENTS+=(
-		"apt/qemu-guest-agent" # qemu support packages included in rootfs
-		# "output_qcow2"   # output as qcow2 # @TODO not implemented yet
-	)
+	FLAVOR_FRAGMENTS+=("output_qcow2")
+	FLAVOR_FRAGMENTS+=("apt/qemu-guest-agent") # This just adds the qemu-guest-agent package, which is the same across EL/Debian/Ubuntu
 }
