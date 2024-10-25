@@ -9,6 +9,7 @@ function flavor_vendor_ka() {
 	FLAVOR_FRAGMENTS+=(
 		"serial_console"
 		"registry_mirrors_sample"
+		"add_ansible_user"
 	)
 
 	case "${FLAVOR_DISTRO_TYPE}" in
