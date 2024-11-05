@@ -8,7 +8,7 @@ jobs:
     env:
       BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      IMAGE_VERSION: "1013"
+      IMAGE_VERSION: "1014"
     permissions:
       packages: write # to write to ghcr.io
       contents: write # to commit to the repo
@@ -31,6 +31,8 @@ jobs:
           - { id: "fedora-cloud-k8s-qemu", env: { } }
           - { id: "rocky-cloud-k8s-baremetal", env: { } }
           - { id: "rocky-cloud-k8s-qemu", env: { } }
+          - { id: "alma-cloud-k8s-baremetal", env: { } }
+          - { id: "alma-cloud-k8s-qemu", env: { } }
     name: "${{ matrix.id }}"
     steps:
       - name: cleanup GHA hosted runner
