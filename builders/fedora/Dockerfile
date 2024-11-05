@@ -16,6 +16,7 @@ RUN bash -e /extra-dockerfile/builder_dockerfile_early.sh
 
 # Yes, this has a huge dependency tree. Hopefully you won't cache miss this too often; reduce your usage of early fragments.
 RUN dnf -y install --best --allowerasing pigz jq wget curl tree systemd-ukify systemd-boot systemd-boot-unsigned cpio mtools xfsprogs git kmod mkosi apt dpkg ubu-keyring grub2-efi-x64 grub2-efi-x64-modules grub2-tools grub2-tools-efi grub2-tools-extra qemu-img
+RUN dnf -y install --best --allowerasing createrepo_c
 
 WORKDIR /cache/packages
 WORKDIR /out
@@ -26,7 +27,7 @@ WORKDIR /mkosi-src
 
 # Grab mkosi sources from GitHub Releases
 #
-RUN wget --no-check-certificate -O mkosi.tar.gz https://github.com/systemd/mkosi/archive/refs/tags/v23.1.tar.gz
+RUN wget --no-check-certificate -O mkosi.tar.gz https://github.com/systemd/mkosi/archive/refs/tags/v24.3.tar.gz
 RUN tar xzf mkosi.tar.gz && rm -f mkosi.tar.gz
 RUN ln -s mkosi-* mkosi
 RUN ls -la

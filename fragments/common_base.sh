@@ -23,7 +23,7 @@ function config_mkosi_post::300_common_base() {
 	mkosi_conf_config_value "Content" "Autologin" "true"
 
 	mkosi_conf_config_value "Distribution" "PackageManagerTrees" "package-manager-tree"
-	mkosi_conf_config_value "Content" "BuildSources" "./extra-packages:extra-packages"
+	mkosi_conf_config_value "Content" "PackageDirectories" "./extra-packages" # This replaces the mkosi 23.x "BuildSources" directive
 
 	mkosi_conf_finish_edit "common base stuff"
 }

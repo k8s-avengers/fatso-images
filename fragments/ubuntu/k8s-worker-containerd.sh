@@ -37,8 +37,8 @@ function mkosi_script_pre_mkosi_host::k8s_worker_containerd_download() {
 }
 
 function config_mkosi_pre::k8s_worker_containerd_package() {
-	obtain_latest_version_k8s_worker_containerd # again, since this runs in a different shell context
-	mkosi_config_add_rootfs_packages "./extra-packages/${latest_release_version_k8s_worker_containerd}_k8s-worker-containerd_amd64_noble.deb"
+	obtain_latest_version_k8s_worker_containerd              # again, since this runs in a different shell context
+	mkosi_config_add_rootfs_packages "k8s-worker-containerd" # in extra-packages; mkosi builds a temporary repo with the extra-packages in it
 }
 
 function mkosi_script_postinst_chroot::400_k8s_worker_containerd_install() {

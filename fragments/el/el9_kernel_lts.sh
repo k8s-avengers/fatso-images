@@ -45,8 +45,8 @@ function config_mkosi_pre::el_kernel_lts_pkgs() {
 	cat "${WORK_DIR}/kversions.conf.sh"
 
 	log info "Adding kernel lts packages to package list..."
-	mkosi_config_add_rootfs_packages "./extra-packages/${kernel_file}"
-	mkosi_config_add_rootfs_packages "./extra-packages/${px_file}"
+	mkosi_config_add_rootfs_packages "kernel_lts_generic_61y" # simple name of the package; mkosi builds a temporary repo with the extra-packages in it
+	mkosi_config_add_rootfs_packages "px"
 }
 
 function download_one_kernel_lts_file() {
