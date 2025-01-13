@@ -48,7 +48,7 @@ function install_dependencies() {
 	fi
 
 	if [[ "$(uname)" == "Darwin" ]]; then
-		if [[ ${#debian_pkgs[@]} -gt 0 ]]; then
+		if [[ ${#brew_pkgs[@]} -gt 0 ]]; then
 			log info "Detected Darwin, assuming 'brew' is available: running 'brew install ${brew_pkgs[*]}'"
 			brew install "${brew_pkgs[@]}"
 		fi
