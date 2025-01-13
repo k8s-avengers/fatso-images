@@ -82,6 +82,19 @@ function check_docker_daemon_for_sanity() {
 		declare -g -r -i DOCKER_HAS_BUILDX=1
 	fi
 
+	# Detect if we're using a remote Docker daemon; such is the case with Docker Desktop, Rancher Desktop, colima.
+	# In that case, "mounts" are remote (sshfs/virtiofs/etc) and not really local directories being bind-mounted.
+	# That deeply impacts performance and permissioning, so if using a remote, we should use Docker volumes instead of mounts.
+	# This is a heuristic, not a guarantee, but it's better than nothing.
+	# If the docker_info contains the string "docker-desktop" or "rancher-desktop" or "colima", we're likely remote.
+	if [[ "${docker_info}" =~ "docker-desktop" || "${docker_info}" =~ "rancher-desktop" || "${docker_info}" =~ "colima" ]]; then
+		log info "Detected remote Docker daemon; using volumes instead of mounts."
+		declare -g -r -i DOCKER_IS_REMOTE=1
+	else
+		log info "Detected local Docker daemon; using mounts."
+		declare -g -r -i DOCKER_IS_REMOTE=0
+	fi
+
 	# Once we know docker is sane, hook up a function that helps us trace invocations.
 	function docker() {
 		log debug "--> docker $*"

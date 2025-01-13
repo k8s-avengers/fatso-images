@@ -297,13 +297,28 @@ docker_opts+=("--privileged")      # Couldn't make it work without this.
 
 docker_opts+=("--env" "GITHUB_OUTPUT=${GITHUB_OUTPUT}") # Pass-down the GITHUB_OUTPUT variable
 
-docker_opts+=("-v" "${SCRIPT_DIR}/${WORK_DIR}:/work")
-docker_opts+=("-v" "${SCRIPT_DIR}/${OUTPUT_DIR}:/out")
+# Those need to be mounts, always, otherwise there's no way to get the output out of the container (or the input in)
 docker_opts+=("-v" "${SCRIPT_DIR}/${DIST_DIR}:/dist")
-docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages")
-docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_INCREMENTAL}:/cache/incremental")
-docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_WORKSPACE}:/cache/workspace")
-docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_EXTRA}:/cache/extra")
+docker_opts+=("-v" "${SCRIPT_DIR}/${WORK_DIR}:/work")
+
+# Handle mounting of directories; if DOCKER_IS_REMOTE=1, use named volumes, otherwise just bind-mounts.
+if [[ ${DOCKER_IS_REMOTE} -gt 0 ]]; then
+	log info "Using volumes for remote Docker daemon."
+	docker_opts+=("--mount" "type=volume,source=fatso-out,target=/out")
+	docker_opts+=("--mount" "type=volume,source=fatso-cache-packages,target=/cache/packages")
+	docker_opts+=("--mount" "type=volume,source=fatso-cache-incremental,target=/cache/incremental")
+	docker_opts+=("--mount" "type=volume,source=fatso-cache-workspace,target=/cache/workspace")
+	docker_opts+=("--mount" "type=volume,source=fatso-cache-extra,target=/cache/extra")
+else
+	log info "Using bind-mounts for local Docker daemon."
+	docker_opts+=("-v" "${SCRIPT_DIR}/${OUTPUT_DIR}:/out")
+	docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_PKGS}:/cache/packages")
+	docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_INCREMENTAL}:/cache/incremental")
+	docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_WORKSPACE}:/cache/workspace")
+	docker_opts+=("-v" "${SCRIPT_DIR}/${CACHE_DIR_EXTRA}:/cache/extra")
+fi
+
+# The image run.
 docker_opts+=("${BUILDER_IMAGE_REF}")
 
 # Important: command _after_ the options
