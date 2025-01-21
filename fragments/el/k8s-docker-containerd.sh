@@ -13,8 +13,6 @@ function config_mkosi_pre::containerd_from_docker() {
 		gpgkey=https://download.docker.com/linux/centos/gpg
 	DOCKER_YUM_REPO
 
-	cat "${WORK_DIR}/package-manager-tree/etc/yum.repos.d/docker-el-${EL_RELEASE}.repo"
-
 	mkosi_config_add_rootfs_packages containerd # @TODO: more?
 }
 

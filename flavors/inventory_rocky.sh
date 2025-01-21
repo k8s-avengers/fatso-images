@@ -33,3 +33,24 @@ function flavor_base_rocky-cloud-k8s() {
 		"el/k8s"
 	)
 }
+# ---------------------------------------------------------------------------------------------------------------------------------
+function flavor_base_rocky-cloud-workstation() {
+	flavor_base_rocky-cloud
+	FLAVOR_FRAGMENTS+=(
+		"el/k8s-docker-full" # full docker with buildx and compose
+		"el/kubectl"         # from k8s repo, just kubectl (no kubeadm or kubelet)
+		"el/powershell"      # powershell via Microsoft's RPM repo
+		"el/azure-cli"       # Azure CLI from Microsoft's RPM repo
+		"el/workstation"     # git and other workstation tools, if any
+	)
+}
+# ---------------------------------------------------------------------------------------------------------------------------------
+function flavor_base_rocky-cloud-ado-agent() {
+	flavor_base_rocky-cloud
+	FLAVOR_FRAGMENTS+=(
+		"el/k8s-docker-full" # full docker with buildx and compose
+		"el/powershell"      # powershell via Microsoft's RPM repo
+		"el/workstation"     # git and other workstation tools, if any
+		"el/ado-agent"       # Azure DevOps build agent 4.x
+	)
+}
