@@ -1,3 +1,7 @@
+function config_mkosi_pre::ado_agent_prerequisite_packages() {
+	mkosi_config_add_rootfs_packages "git"
+}
+
 function mkosi_script_postinst_chroot::deploy_latest_ado_agent() {
 	log info "Obtaining latest ADO agent from Microsoft's GitHub..."
 	declare version="4.248.0"
