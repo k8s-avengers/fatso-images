@@ -7,10 +7,10 @@ function config_mkosi_pre::powershell_from_microsoft() {
 	mkosi_stdin_to_work_file "package-manager-tree/etc/yum.repos.d" "ms-powershell-${EL_RELEASE}.repo" <<- POWERSHELL_REPO
 		[microsoft-powershell-el-${EL_RELEASE}]
 		name=microsoft-powershell-el-${EL_RELEASE}
-		baseurl=http://packages.microsoft.com/rhel/${EL_RELEASE}.0/prod
+		baseurl=https://packages.microsoft.com/rhel/${EL_RELEASE}.0/prod
 		enabled=1
 		gpgcheck=0
-		gpgkey=http://packages.microsoft.com/keys/microsoft.asc
+		gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 	POWERSHELL_REPO
 
 	mkosi_config_add_rootfs_packages powershell

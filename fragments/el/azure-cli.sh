@@ -7,10 +7,10 @@ function config_mkosi_pre::azure_cli_from_microsoft() {
 	mkosi_stdin_to_work_file "package-manager-tree/etc/yum.repos.d" "ms-azure_cli-${EL_RELEASE}.repo" <<- AZURE_CLI_REPO
 		[microsoft-azure-cli-el-${EL_RELEASE}]
 		name=microsoft-azure-cli-el-${EL_RELEASE}
-		baseurl=http://packages.microsoft.com/rhel/${EL_RELEASE}.0/prod
+		baseurl=https://packages.microsoft.com/rhel/${EL_RELEASE}.0/prod
 		enabled=1
 		gpgcheck=0
-		gpgkey=http://packages.microsoft.com/keys/microsoft.asc
+		gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 	AZURE_CLI_REPO
 
 	mkosi_config_add_rootfs_packages azure-cli
