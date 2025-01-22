@@ -18,6 +18,27 @@ function config_mkosi_pre::docker_full_from_docker() {
 	mkosi_config_add_rootfs_packages docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 }
 
+function mkosi_script_postinst_chroot::docker_workarounds_nofile_and_use_containerd_image_store() {
+	log info "Configuring Docker to use the containerd image store; /var/lib/containerd will store the images et al..."
+	mkdir -p /etc/docker
+	echo '{ "features" : { "containerd-snapshotter": true } }' > /etc/docker/daemon.json
+
+	log info "Applying workarounds for LimitNOFILE problems in docker and containerd from Docker, Inc..."
+	mkdir -p /etc/systemd/system/docker.service.d
+	cat <<- EOD > /etc/systemd/system/docker.service.d/override.conf
+		# See https://github.com/moby/moby/issues/38814 and https://github.com/containerd/containerd/pull/8924
+		[Service]
+		LimitNOFILE=1024:524288
+	EOD
+	mkdir -p /etc/systemd/system/containerd.service.d
+	cat <<- EOD > /etc/systemd/system/containerd.service.d/override.conf
+		# See https://github.com/moby/moby/issues/38814 and https://github.com/containerd/containerd/pull/8924
+		[Service]
+		LimitNOFILE=1024:524288
+	EOD
+	log info "Workarounds & containerd-image-store done for Docker, Inc..."
+}
+
 function mkosi_script_finalize_chroot::docker_full_enable() {
 	log info "Enabling docker service..."
 	systemctl enable docker
