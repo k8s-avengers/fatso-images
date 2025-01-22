@@ -33,3 +33,28 @@ function flavor_base_alma-cloud-k8s() {
 		"el/k8s"
 	)
 }
+# ---------------------------------------------------------------------------------------------------------------------------------
+function flavor_base_alma-cloud-workstation() {
+	flavor_base_alma-cloud
+	FLAVOR_FRAGMENTS+=(
+		"el/k8s-docker-full" # full docker with buildx and compose
+		"el/kubectl"         # from k8s repo, just kubectl (no kubeadm or kubelet)
+		"el/powershell"      # powershell via Microsoft's RPM repo
+		"el/azure-cli"       # Azure CLI from Microsoft's RPM repo
+		"el/workstation"     # git, python, bat, and other workstation tools
+		"el/repos-enabled"   # ship the image with all repos enabled (/etc/yum.repos.d)
+		"node-exporter"      # node-exporter running as a systemd service
+		"git-dev"            # tools for git: git-credential-manager,
+		"k8s-dev"            # node-exporter running as a systemd service
+	)
+}
+# ---------------------------------------------------------------------------------------------------------------------------------
+function flavor_base_alma-cloud-ado-agent() {
+	flavor_base_alma-cloud
+	FLAVOR_FRAGMENTS+=(
+		"el/k8s-docker-full" # full docker with buildx and compose
+		"el/powershell"      # powershell via Microsoft's RPM repo
+		"el/ado-agent"       # Azure DevOps build agent 4.x
+		"node-exporter"      # node-exporter running as a systemd service
+	)
+}
