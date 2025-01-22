@@ -15,3 +15,8 @@ function config_mkosi_pre::kubectl_from_official_obs_repos() {
 
 	mkosi_config_add_rootfs_packages kubectl
 }
+
+function mkosi_script_finalize_chroot::check_kubectl_version() {
+	log info "Checking kubectl version..."
+	kubectl version --client
+}
