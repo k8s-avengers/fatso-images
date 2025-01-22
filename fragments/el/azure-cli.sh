@@ -16,10 +16,11 @@ function config_mkosi_pre::azure_cli_from_microsoft() {
 	mkosi_config_add_rootfs_packages azure-cli
 }
 
-function mkosi_script_postinst_chroot::azure_cli_add_devops_extension() {
-	log info "Adding Azure DevOps extension to Azure CLI..."
-	az extension add --name azure-devops
-}
+# This doesnt make sense, as it downloads & installs for the current user (root) only.
+#function mkosi_script_postinst_chroot::azure_cli_add_devops_extension() {
+#	log info "Adding Azure DevOps extension to Azure CLI..."
+#	az extension add --name azure-devops
+#}
 
 function mkosi_script_finalize_chroot::azure_cli_show_version() {
 	log info "Checking Azure CLI version..."
