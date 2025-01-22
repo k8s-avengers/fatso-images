@@ -292,7 +292,7 @@ fi
 
 declare -a docker_opts=()
 docker_opts+=("run" "--rm")
-[[ -t 0 ]] && docker_opts+=("-it") # If terminal is interactive, add -it
+# [[ -t 0 ]] && docker_opts+=("-it") # If terminal is interactive, add -it - DON'T, otherwise it behaves differently on input
 docker_opts+=("--privileged")      # Couldn't make it work without this.
 
 docker_opts+=("--env" "GITHUB_OUTPUT=${GITHUB_OUTPUT}") # Pass-down the GITHUB_OUTPUT variable
