@@ -16,6 +16,7 @@ function config_mkosi_pre::000_apt_base() {
 		"zsh"             # for people who prefer it over bash
 		"screen"          # for people who don't like tmux
 		"tmux"            # for people who don't like screen
+		"jq"              # swiss-army JSON tool
 
 		"vim"  # for those who like it
 		"nano" # for those who don't
