@@ -44,6 +44,8 @@ function flavor_base_rocky-cloud-workstation() {
 		"el/workstation"     # git, python, bat, and other workstation tools
 		"el/repos-enabled"   # ship the image with all repos enabled (/etc/yum.repos.d)
 		"node-exporter"      # node-exporter running as a systemd service
+		"git-dev"            # tools for git: git-credential-manager,
+		"k8s-dev"            # node-exporter running as a systemd service
 	)
 }
 # ---------------------------------------------------------------------------------------------------------------------------------
