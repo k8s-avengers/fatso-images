@@ -5,7 +5,7 @@ function config_mkosi_post::100_el_dnf_base_distro() {
 	# Bomb if EL_DISTRO is not set; oneliner
 	[[ -z "${EL_DISTRO}" ]] && log error "EL_DISTRO is not set by the flavor!" && return 1
 	[[ -z "${EL_RELEASE}" ]] && log error "EL_RELEASE is not set by the flavor!" && return 1
-	[[ -z "${EL_REPOSITORIES}" ]] && log warning "EL_REPOSITORIES is not set by the flavor!"
+	[[ -z "${EL_REPOSITORIES}" ]] && log warn "EL_REPOSITORIES is not set by the flavor!"
 
 	mkosi_conf_begin_edit "base"
 	mkosi_conf_config_value "Distribution" "Distribution" "${EL_DISTRO}"
