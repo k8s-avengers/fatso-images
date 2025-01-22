@@ -5,12 +5,14 @@ function config_mkosi_pre::cloud_package() {
 }
 
 function mkosi_script_postinst_chroot::cloud_wait_nm() {
-	log info "Setting cloud-init to up wait for NM (POSTINST)..."
+	log info "Setting cloud-init to up wait for NM (postinst)..."
 	systemctl enable NetworkManager-wait-online.service
 }
 
-function mkosi_script_finalize_chroot::ccloud_services_enable() {
-	log info "Enabling cloud-init services in FINALIZE..."
+function mkosi_script_finalize_chroot::cloud_services_enable() {
+	log info "Enabling cloud-init services in finalize (after presets)..."
 	systemctl enable cloud-init-local.service
 	systemctl enable cloud-init.service
+	systemctl enable cloud-config.service
+	systemctl enable cloud-final.service
 }
