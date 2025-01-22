@@ -19,8 +19,14 @@ function config_mkosi_post::300_common_base() {
 	mkosi_conf_config_value "Content" "Timezone" "Europe/Amsterdam"
 	mkosi_conf_config_value "Content" "Hostname" "${FLAVOR}"
 	mkosi_conf_config_value "Content" "WithNetwork" "yes"
-	mkosi_conf_config_value "Content" "RootPassword" "rootrootroot"
-	mkosi_conf_config_value "Content" "Autologin" "true"
+
+	if [[ "${DISABLE_AUTOLOGIN:-"no"}" == "yes" ]]; then
+		log info "Autologin and root password disabled"
+	else
+		log warn "ATTENTION:: image has autologin and root password enabled ::ATTENTION"
+		mkosi_conf_config_value "Content" "RootPassword" "rootrootroot"
+		mkosi_conf_config_value "Content" "Autologin" "true"
+	fi
 
 	mkosi_conf_config_value "Distribution" "PackageManagerTrees" "package-manager-tree"
 	mkosi_conf_config_value "Content" "PackageDirectories" "./extra-packages" # This replaces the mkosi 23.x "BuildSources" directive
