@@ -11,7 +11,7 @@ function mkosi_script_postinst_chroot::deploy_harbor() {
 
 	mkdir -p /opt
 	cd /opt || exit 1
-	wget --output-document=harbor-online-installer.tgz "${harbor_installer_url}"
+	wget --progress=dot:mega --output-document=harbor-online-installer.tgz "${harbor_installer_url}"
 	tar xzf harbor-online-installer.tgz
 	rm harbor-online-installer.tgz
 	log info "Harbor scripts are at /opt/harbor"

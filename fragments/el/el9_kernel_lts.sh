@@ -61,7 +61,7 @@ function download_one_kernel_lts_file() {
 		log info "Kernel item already downloaded; /cache/extra/${kernel_lts_fn}"
 	else
 		log info "Downloading kernel item '${kernel_lts_fn}'..."
-		wget --no-check-certificate --local-encoding=UTF-8 --output-document="/cache/extra/${kernel_lts_fn}.tmp" "${kernel_lts_release_dl_url}"
+		wget --no-check-certificate --progress=dot:mega --local-encoding=UTF-8 --output-document="/cache/extra/${kernel_lts_fn}.tmp" "${kernel_lts_release_dl_url}"
 		mv "/cache/extra/${kernel_lts_fn}.tmp" "/cache/extra/${kernel_lts_fn}"
 		ls -lah "/cache/extra/${kernel_lts_fn}"
 	fi
