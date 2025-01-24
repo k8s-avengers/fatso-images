@@ -26,7 +26,7 @@ function mkosi_script_pre_mkosi_host::k8s_worker_containerd_download() {
 		log info "Package already downloaded: ${full_deb_path}"
 	else
 		log info "Will download ${full_deb_path} from latest release..."
-		wget --no-cache --no-check-certificate --progress=dot:mega --local-encoding=UTF-8 --output-document="${full_deb_path}.tmp" "${down_url}"
+		wget --no-cache --progress=dot:mega --local-encoding=UTF-8 --output-document="${full_deb_path}.tmp" "${down_url}"
 		mv -v "${full_deb_path}.tmp" "${full_deb_path}"
 	fi
 

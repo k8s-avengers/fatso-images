@@ -12,7 +12,7 @@ function mkosi_script_postinst_chroot::deploy_node_exporter() {
 	declare tmp_extract_dir="/tmp/node_exporter_${version}/node_exporter-${version}.linux-${arch}"
 	declare tmp_bin="${tmp_extract_dir}/node_exporter"
 	declare dst_bin="/usr/local/sbin/node_exporter"
-	wget --no-check-certificate --progress=dot:mega -O "${down_file}" "${down_url}"
+	wget --progress=dot:mega -O "${down_file}" "${down_url}"
 	cd "${extract_base_dir}" || log error "Failed to cd to ${extract_base_dir}"
 	tar xzf "${down_file}"
 	cp -v "${tmp_bin}" "${dst_bin}"

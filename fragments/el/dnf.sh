@@ -76,7 +76,7 @@ function mkosi_config_add_rootfs_packages() {
 
 # No neofetch in EL, use screenfetch @TODO move out of here
 function mkosi_script_postinst_chroot::neofetch() {
-	wget --no-check-certificate -O /usr/bin/neofetch "https://raw.githubusercontent.com/KittyKatt/screenFetch/master/screenfetch-dev" || true
+	wget -O /usr/bin/neofetch "https://raw.githubusercontent.com/KittyKatt/screenFetch/master/screenfetch-dev" || true
 	chmod +x /usr/bin/neofetch || true
 	ls -la /usr/bin/neofetch || true
 }

@@ -13,7 +13,7 @@ function mkosi_script_postinst_chroot::k8s_dev_k9s_install() {
 	log info "k8s-dev: k9s install version ${version}..."
 	declare tarball_fn="k9s_Linux_amd64.tar.gz"
 	declare down_url="https://github.com/derailed/k9s/releases/download/v${version}/${tarball_fn}"
-	wget --no-check-certificate --progress=dot:mega -O "/tmp/${tarball_fn}" "${down_url}"
+	wget --progress=dot:mega -O "/tmp/${tarball_fn}" "${down_url}"
 	tar -xvf "/tmp/${tarball_fn}" -C /usr/local/bin
 	rm -f "/tmp/${tarball_fn}"
 	log info "k8s-dev: k9s install done."
@@ -24,7 +24,7 @@ function mkosi_script_postinst_chroot::k8s_dev_kubelogin_oidc_install() {
 	declare version="1.32.0"
 	declare zipfile_fn="kubelogin_linux_amd64.zip"
 	declare down_url="https://github.com/int128/kubelogin/releases/download/v${version}/${zipfile_fn}"
-	wget --no-check-certificate --progress=dot:mega -O "/tmp/${zipfile_fn}" "${down_url}"
+	wget --progress=dot:mega -O "/tmp/${zipfile_fn}" "${down_url}"
 	unzip -o -d /usr/local/bin "/tmp/${zipfile_fn}"
 	rm -f "/tmp/${zipfile_fn}"
 	log info "k8s-dev: kubelogin oidc install done."

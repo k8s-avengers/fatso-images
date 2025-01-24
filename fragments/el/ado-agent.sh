@@ -9,7 +9,7 @@ function mkosi_script_postinst_chroot::deploy_latest_ado_agent() {
 	declare down_url="https://vstsagentpackage.azureedge.net/agent/${version}/${tarball_fn}"
 	declare tarball_path="/tmp/${tarball_fn}"
 	declare agent_dir="/opt/vsts-agent"
-	wget --no-check-certificate --progress=dot:mega -O "${tarball_path}" "${down_url}"
+	wget --progress=dot:mega -O "${tarball_path}" "${down_url}"
 	# extract the tarball to the agent_dir
 	mkdir -p "${agent_dir}"
 	tar -C "${agent_dir}" -xzf "${tarball_path}"
