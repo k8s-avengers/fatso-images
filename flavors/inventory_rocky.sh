@@ -42,6 +42,7 @@ function flavor_base_rocky-cloud-workstation() {
 		"el/powershell"     # powershell via Microsoft's RPM repo
 		"el/azure-cli"      # Azure CLI from Microsoft's RPM repo
 		"el/workstation"    # git, python, bat, and other workstation tools
+		"el/trivy"          # trivy vulnerability scanner, from Aqua Security's RPM repo
 		"el/repos-enabled"  # ship the image with all repos enabled (/etc/yum.repos.d)
 		"node-exporter"     # node-exporter running as a systemd service
 		"git-dev"           # tools for git: git-credential-manager,
@@ -55,6 +56,7 @@ function flavor_base_rocky-cloud-ado-agent() {
 		"el/docker-ce-full" # full docker with buildx and compose
 		"el/powershell"     # powershell via Microsoft's RPM repo
 		"el/ado-agent"      # Azure DevOps build agent 4.x
+		"el/trivy"          # trivy vulnerability scanner, from Aqua Security's RPM repo
 		"node-exporter"     # node-exporter running as a systemd service
 	)
 }
