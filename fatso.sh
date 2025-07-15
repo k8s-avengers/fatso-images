@@ -6,6 +6,7 @@ set -o errtrace # trace ERR through - enabled
 set -o errexit  ## set -e : exit the script if any statement returns a non-true return value - enabled
 
 source lib/common.sh
+source lib/common-extra.sh
 source lib/fragments.sh
 source lib/inventory.sh
 source lib/mkosi_helpers.sh
@@ -206,8 +207,8 @@ declare -g -r BUILDER_EARLY_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_early
 declare -g -r BUILDER_LATE_INIT_SCRIPT="${BUILDER_DIR}/builder_dockerfile_late.sh"
 
 # run in the context of the builder Dockerfile
-frag_var="BUILDER_FRAGMENTS_EARLY" always="yes" create_mkosi_script_from_fragments_specific "builder_dockerfile_early_host" "${BUILDER_EARLY_INIT_SCRIPT}"
-frag_var="BUILDER_FRAGMENTS_LATE" always="yes" create_mkosi_script_from_fragments_specific "builder_dockerfile_late_host" "${BUILDER_LATE_INIT_SCRIPT}"
+frag_var="BUILDER_FRAGMENTS_EARLY" always="yes" skip_extra="yes" create_mkosi_script_from_fragments_specific "builder_dockerfile_early_host" "${BUILDER_EARLY_INIT_SCRIPT}"
+frag_var="BUILDER_FRAGMENTS_LATE" always="yes" skip_extra="yes" create_mkosi_script_from_fragments_specific "builder_dockerfile_late_host" "${BUILDER_LATE_INIT_SCRIPT}"
 
 # those are not really for mkosi, but before/after helpers that will run inside the Docker container
 # can be used to twist the image in ways mkosi can't, like pre-downloading things, or post-processing (eg convert to qcow2/vhdx/etc)

@@ -37,6 +37,17 @@ function create_mkosi_script_from_fragments_specific() {
 		# <common.sh>
 		$(cat "lib/common.sh")
 		# </common.sh>
+	EOD
+
+	if [[ "${skip_extra:-"no"}" != "yes" ]]; then
+		cat <<- EOD >> "${full_fn}"
+			# <common-extra.sh>
+			$(cat "lib/common-extra.sh")
+			# </common-extra.sh>
+		EOD
+	fi
+
+	cat <<- EOD >> "${full_fn}"
 		log info "fatso: starting '${script_basename}' (all ${#fragment_implementations[@]} '${interface}' methods)..."
 	EOD
 

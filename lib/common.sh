@@ -130,3 +130,4 @@ function batcat() {
 	[[ "${BAT}" != "me" ]] && return 0
 	command batcat --color=always --paging=never "${@}"
 }
+
