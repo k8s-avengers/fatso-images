@@ -34,6 +34,22 @@ function flavor_base_rocky-cloud-k8s() {
 	)
 }
 # ---------------------------------------------------------------------------------------------------------------------------------
+function flavor_base_rocky-cloud-k8s-el-containerd() {
+	flavor_base_rocky-cloud
+	FLAVOR_FRAGMENTS+=(
+		"el/k8s-el-containerd"
+		"el/k8s"
+	)
+}
+# ---------------------------------------------------------------------------------------------------------------------------------
+function flavor_base_rocky-noncloud-k8s-el-containerd() {
+	flavor_base_rocky
+	FLAVOR_FRAGMENTS+=(
+		"el/k8s-el-containerd"
+		"el/k8s"
+	)
+}
+# ---------------------------------------------------------------------------------------------------------------------------------
 function flavor_base_rocky-cloud-workstation() {
 	flavor_base_rocky-cloud
 	FLAVOR_FRAGMENTS+=(
