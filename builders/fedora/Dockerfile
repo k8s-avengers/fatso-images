@@ -1,4 +1,4 @@
-FROM fedora:40
+FROM fedora:42
 
 # Proxy handling; will be filled in by bash automatically.
 ARG PROXY_NO_PROXY
