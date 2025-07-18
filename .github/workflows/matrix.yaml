@@ -3,6 +3,10 @@ on:
   #schedule: [ cron: '0 5 * * *' ] # every day at 5am UTC
   workflow_dispatch:
 
+permissions:
+  packages: write # to write to ghcr.io
+  contents: write # to commit to the repo
+
 jobs:
   build:
     env:
