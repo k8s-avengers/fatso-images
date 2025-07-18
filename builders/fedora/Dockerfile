@@ -31,7 +31,7 @@ WORKDIR /mkosi-src
 
 # Grab mkosi sources from GitHub Releases
 #
-RUN wget -O mkosi.tar.gz https://github.com/systemd/mkosi/archive/refs/tags/v24.3.tar.gz
+RUN wget -O mkosi.tar.gz https://github.com/systemd/mkosi/archive/refs/tags/v25.3.tar.gz
 RUN tar xzf mkosi.tar.gz && rm -f mkosi.tar.gz
 RUN ln -s mkosi-* mkosi
 RUN ls -la
