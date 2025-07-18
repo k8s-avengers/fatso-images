@@ -6,6 +6,28 @@ function config_mkosi_init::350_common_base() {
 		["IMAGE_VERSION"]="${IMAGE_VERSION}"
 		["IMAGE_FLAVOR_VERSION_ID"]="${FLAVOR}-v${IMAGE_VERSION}" # Override this for predictable filenames for CI pipelines
 	)
+
+	# Determine the architecture we're running on, as that will be the target architecture for the image (no cross-building!)
+	declare -g OS_ARCH="undefined"
+	declare -g TOOLCHAIN_ARCH="undefined"
+	OS_ARCH="$(uname -m)"
+	case "${OS_ARCH}" in
+		"x86_64" | "amd64")
+			OS_ARCH="amd64"
+			TOOLCHAIN_ARCH="x86_64"
+			;;
+		"aarch64" | "arm64")
+			OS_ARCH="arm64"
+			TOOLCHAIN_ARCH="aarch64"
+			;;
+		*)
+			echo "ERROR: Unsupported architecture '${OS_ARCH}' for image build." >&2
+			exit 1
+			;;
+	esac
+	log info "Image Architecture: OS_ARCH: ${OS_ARCH}, TOOLCHAIN_ARCH: ${TOOLCHAIN_ARCH}"
+	MKOSI_CONTENT_ENVIRONMENT["OS_ARCH"]="${OS_ARCH}"
+	MKOSI_CONTENT_ENVIRONMENT["TOOLCHAIN_ARCH"]="${TOOLCHAIN_ARCH}"
 }
 
 function config_mkosi_post::300_common_base() {

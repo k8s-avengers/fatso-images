@@ -14,9 +14,24 @@ function config_mkosi_pre::el_grub() {
 	declare -g -a KERNEL_CMDLINE_FRAGMENTS
 	KERNEL_CMDLINE_FRAGMENTS+=("rw" "console=tty1" "selinux=0") # @TODO selinux should not be done here
 
-	mkosi_config_add_rootfs_packages grubby grub2-efi-x64 grub2-efi-x64-modules grub2-tools grub2-tools-efi grub2-tools-extra
+	log info "Grub: Image Architecture: OS_ARCH: ${OS_ARCH}, TOOLCHAIN_ARCH: ${TOOLCHAIN_ARCH}"
+	mkosi_config_add_rootfs_packages grubby grub2-tools grub2-tools-extra # Common across architectures
 	mkosi_config_add_rootfs_packages "e2fsprogs" # needed for ext4 rootfs
 
+	case "${OS_ARCH}" in
+		"amd64")
+			log info "Grub: Adding x86-64 specific packages"
+			mkosi_config_add_rootfs_packages grub2-efi-x64 grub2-efi-x64-modules grub2-tools-efi
+			;;
+		"arm64")
+			log info "Grub: Adding aarch64 specific packages"
+			mkosi_config_add_rootfs_packages grub2-efi-aa64 grub2-efi-aa64-modules
+			;;
+		*)
+			log error "Unsupported architecture '${OS_ARCH}' for GRUB configuration."
+			exit 1
+			;;
+	esac
 }
 
 function config_mkosi_post::el_grub_ext4_repart() {
