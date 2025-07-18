@@ -8,7 +8,7 @@ jobs:
     env:
       BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      IMAGE_VERSION: "1017"
+      IMAGE_VERSION: "1018"
     permissions:
       packages: write # to write to ghcr.io
       contents: write # to commit to the repo
@@ -18,11 +18,13 @@ jobs:
       matrix:
         include:
           # apt debian/ubuntu stuff
-          - { id: "ubuntu-cloud-k8s-nvidia-baremetal", env: { } }
+          - { id: "ubuntu-cloud-k8s-nvidia-baremetal", env: { }, runner: "ubuntu-latest" }
           # EL rocky/fedora stuff
-          - { id: "rocky-cloud-ado-agent-qemu", env: { } }
-          - { id: "rocky-cloud-workstation-hyperv", env: { } }
-          - { id: "alma-cloud-workstation-qemu", env: { } }
+          - { id: "rocky-cloud-ado-agent-qemu", env: { }, runner: "ubuntu-latest"  }
+          - { id: "rocky-cloud-workstation-hyperv", env: { }, runner: "ubuntu-latest"  }
+          - { id: "alma-cloud-workstation-qemu", env: { }, runner: "ubuntu-latest"  }
+          # arm64 with recent containerd
+          - { id: "rocky-cloud-k8s-el-containerd", env: {}, runner: "ubuntu-24.04-arm" }
     name: "${{ matrix.id }}"
     steps:
       - name: cleanup GHA hosted runner
