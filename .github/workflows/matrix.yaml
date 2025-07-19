@@ -7,34 +7,15 @@ permissions:
   packages: write # to write to ghcr.io
   contents: write # to commit to the repo
 
-env:
-  BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  IMAGE_VERSION: "1018"
-
 jobs:
-  prepare:
-    name: "Prepare release"
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: "Prepare date-based release outputs"
-        id: prepare-date-outputs
-        run: |
-          echo "release_tag=${{env.IMAGE_VERSION}}-$(date +%y%m%d)-${{ github.run_number }}" >> $GITHUB_OUTPUT
-
-      - name: Prepare GH Release
-        uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{ steps.prepare-date-outputs.outputs.release_tag }}"
-          prerelease: false
-          title: "Images ${{ steps.prepare-date-outputs.outputs.release_tag }}"
-
-    outputs:
-      release_tag: ${{ steps.prepare-date-outputs.outputs.release_tag }}
-
   build:
+    env:
+      BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      IMAGE_VERSION: "1018"
+    permissions:
+      packages: write # to write to ghcr.io
+      contents: write # to commit to the repo
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
       matrix:
@@ -42,13 +23,12 @@ jobs:
           # apt debian/ubuntu stuff
           - { id: "ubuntu-cloud-k8s-nvidia-baremetal", env: { }, runner: "ubuntu-latest" }
           # EL rocky/fedora stuff
-          - { id: "ka-rocky-cloud-k8s-el-containerd-qemu", env: { }, runner: "ubuntu-latest" }
+          - { id: "ka-rocky-cloud-k8s-el-containerd-qemu", env: { }, runner: "ubuntu-latest"  }
           # arm64 with recent containerd
-          - { id: "ka-rocky-noncloud-k8s-el-containerd-qemu", env: { }, runner: "ubuntu-24.04-arm" }
-          - { id: "ka-rocky-cloud-k8s-el-containerd-qemu", env: { }, runner: "ubuntu-24.04-arm" }
+          - { id: "ka-rocky-noncloud-k8s-el-containerd-qemu", env: {}, runner: "ubuntu-24.04-arm" }
+          - { id: "ka-rocky-cloud-k8s-el-containerd-qemu", env: {}, runner: "ubuntu-24.04-arm" }
     name: "${{ matrix.id }}"
     runs-on: "${{ matrix.runner }}"
-    needs: [ prepare ]
     steps:
       - name: cleanup GHA hosted runner
         run: |
@@ -84,10 +64,13 @@ jobs:
         run: |
           bash fatso.sh "${{ matrix.id }}" korok
 
-      - name: "GH Release ${{matrix.id}} for version ${{ needs.prepare.outputs.release_tag }}"
-        continue-on-error: true
-        uses: softprops/action-gh-release@v2
+      # Release the artifacts into GitHub Releases for easy downloading
+      - name: "GH Release ${{matrix.id}} for version ${{ steps.buildimage.outputs.FULL_VERSION }}"
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
-          tag_name: ${{ needs.prepare.outputs.release_tag }}
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "${{matrix.id}}"
+          prerelease: false
+          title: "${{ steps.buildimage.outputs.FULL_VERSION }} for ${{matrix.id}}"
           files: |
             dist/*
