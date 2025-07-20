@@ -7,15 +7,27 @@ permissions:
   packages: write # to write to ghcr.io
   contents: write # to commit to the repo
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  IMAGE_VERSION: "1018"
+
 jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version_tag: ${{ steps.setver.outputs.version_tag }}
+    steps:
+      - name: Calculate version tag
+        id: setver
+        run: |
+          echo "version_tag=${{ env.IMAGE_VERSION }}-$(date +'%Y%m%d')-${{ github.run_number }}" >> $GITHUB_OUTPUT
+      - name: Create GitHub Release ${{ steps.setver.outputs.version_tag }}
+        run: |
+          gh release create "${{ steps.setver.outputs.version_tag }}" --title "Release ${{ steps.setver.outputs.version_tag }}" --notes "Images Release"
+
   build:
-    env:
-      BASE_OCI_REF: "ghcr.io/${{ github.repository_owner }}/"
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      IMAGE_VERSION: "1018"
-    permissions:
-      packages: write # to write to ghcr.io
-      contents: write # to commit to the repo
+    needs: prepare-release
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
       matrix:
@@ -23,10 +35,10 @@ jobs:
           # apt debian/ubuntu stuff
           - { id: "ubuntu-cloud-k8s-nvidia-baremetal", env: { }, runner: "ubuntu-latest" }
           # EL rocky/fedora stuff
-          - { id: "ka-rocky-cloud-k8s-el-containerd-qemu", env: { }, runner: "ubuntu-latest"  }
+          - { id: "ka-rocky-cloud-k8s-el-containerd-qemu", env: { }, runner: "ubuntu-latest" } # k8s amd64
           # arm64 with recent containerd
-          - { id: "ka-rocky-noncloud-k8s-el-containerd-qemu", env: {}, runner: "ubuntu-24.04-arm" }
-          - { id: "ka-rocky-cloud-k8s-el-containerd-qemu", env: {}, runner: "ubuntu-24.04-arm" }
+          - { id: "ka-rocky-noncloud-k8s-el-containerd-qemu", env: { }, runner: "ubuntu-24.04-arm" }
+          - { id: "ka-rocky-cloud-k8s-el-containerd-qemu", env: { }, runner: "ubuntu-24.04-arm" } # k8s arm64
     name: "${{ matrix.id }}"
     runs-on: "${{ matrix.runner }}"
     steps:
@@ -53,24 +65,22 @@ jobs:
         uses: actions/cache@v4
         with:
           path: cache
-          key: "mkosi-cache-${{matrix.id}}-${{hashFiles('assets/**/*', 'flavors/**/*', 'fragments/**/*', 'lib/**/*', 'fatso.sh')}}"
+          key: "mkosi-cache-${{matrix.runner}}-${{matrix.id}}"
           restore-keys: |
-            mkosi-cache-${{matrix.id}}
+            mkosi-cache-${{matrix.runner}}-${{matrix.id}}
+            mkosi-cache-${{matrix.runner}}
           save-always: true # always save the cache, even if build fails
 
-      - name: Actually process ${{matrix.id}}
+      - name: Build image ${{matrix.id}}
         id: buildimage
-        env: ${{ matrix.env }} # this gets combined with the job-wide env's like BASE_OCI_REF
+        env: ${{ matrix.env }} # this gets combined with the job-wide env's
         run: |
           bash fatso.sh "${{ matrix.id }}" korok
 
-      # Release the artifacts into GitHub Releases for easy downloading
-      - name: "GH Release ${{matrix.id}} for version ${{ steps.buildimage.outputs.FULL_VERSION }}"
-        uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{matrix.id}}"
-          prerelease: false
-          title: "${{ steps.buildimage.outputs.FULL_VERSION }} for ${{matrix.id}}"
-          files: |
-            dist/*
+      - name: Upload to GH Release ${{ needs.prepare-release.outputs.version_tag }}
+        # --clobber to overwrite existing files
+        run: |
+          set -x
+          if compgen -G "dist/*" > /dev/null; then
+            gh release upload "${{ needs.prepare-release.outputs.version_tag }}" dist/* 
+          fi
