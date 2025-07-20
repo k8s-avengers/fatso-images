@@ -7,10 +7,10 @@ function config_mkosi_pre::k8s_from_official_obs_repos() {
 	mkosi_stdin_to_work_file "package-manager-tree/etc/yum.repos.d" "k8s-el-${EL_RELEASE}.repo" <<- DOCKER_YUM_REPO
 		[k8s-el-${EL_RELEASE}]
 		name=k8s-el-${EL_RELEASE}
-		baseurl=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/
+		baseurl=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/
 		enabled=1
 		gpgcheck=1
-		gpgkey=https://pkgs.k8s.io/core:/stable:/v1.30/rpm/repodata/repomd.xml.key
+		gpgkey=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key
 	DOCKER_YUM_REPO
 
 	cat "${WORK_DIR}/package-manager-tree/etc/yum.repos.d/k8s-el-${EL_RELEASE}.repo"
