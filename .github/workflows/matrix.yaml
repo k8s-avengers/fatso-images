@@ -24,7 +24,7 @@ jobs:
           echo "version_tag=${{ env.IMAGE_VERSION }}-$(date +'%Y%m%d')-${{ github.run_number }}" >> $GITHUB_OUTPUT
       - name: Create GitHub Release ${{ steps.setver.outputs.version_tag }}
         run: |
-          gh release create "${{ steps.setver.outputs.version_tag }}" --title "Release ${{ steps.setver.outputs.version_tag }}" --notes "Images Release"
+          gh release create "${{ steps.setver.outputs.version_tag }}" --repo "${{ github.repository }}" --title "Release ${{ steps.setver.outputs.version_tag }}" --notes "Images Release"
 
   build:
     needs: prepare-release
@@ -82,5 +82,5 @@ jobs:
         run: |
           set -x
           if compgen -G "dist/*" > /dev/null; then
-            gh release upload "${{ needs.prepare-release.outputs.version_tag }}" dist/* 
+            gh release upload "${{ needs.prepare-release.outputs.version_tag }}" --repo "${{ github.repository }}" dist/* 
           fi
