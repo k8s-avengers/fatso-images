@@ -31,6 +31,7 @@ function flavor_base_rocky-cloud-k8s() {
 	FLAVOR_FRAGMENTS+=(
 		"el/k8s-docker-containerd"
 		"el/k8s"
+		"el/k8s-sysctls"
 	)
 }
 # ---------------------------------------------------------------------------------------------------------------------------------
@@ -39,6 +40,7 @@ function flavor_base_rocky-cloud-k8s-el-containerd() {
 	FLAVOR_FRAGMENTS+=(
 		"el/k8s-el-containerd"
 		"el/k8s"
+		"el/k8s-sysctls"
 	)
 }
 # ---------------------------------------------------------------------------------------------------------------------------------
@@ -47,6 +49,7 @@ function flavor_base_rocky-noncloud-k8s-el-containerd() {
 	FLAVOR_FRAGMENTS+=(
 		"el/k8s-el-containerd"
 		"el/k8s"
+		"el/k8s-sysctls"
 	)
 }
 # ---------------------------------------------------------------------------------------------------------------------------------
