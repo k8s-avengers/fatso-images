@@ -89,10 +89,25 @@ function mkosi_script_postinst_chroot::010_ubuntu_early_fixes() {
 	sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
 	locale-gen
 
+	declare ROOT_PARTLABEL="undefined"
+	case "${OS_ARCH}" in
+		"amd64")
+			ROOT_PARTLABEL="root-x86-64"
+			;;
+		"arm64")
+			ROOT_PARTLABEL="root-arm64"
+			;;
+		*)
+			log error "Unsupported architecture '${OS_ARCH}' for systemd-standard root partition label."
+			exit 1
+			;;
+	esac
+	log info "rootfs partition label: ${OS_ARCH}, TOOLCHAIN_ARCH: ${TOOLCHAIN_ARCH}, ROOT_PARTLABEL: ${ROOT_PARTLABEL}"
+
 	# Let's setup an /etc/fstab so things are mounted and rootfs is grown
 	cat <<- EOD > /etc/fstab
 		# rootfs by partition label, tell it to grow and not waste (a)time
-		PARTLABEL="root-x86-64" / ext4 defaults,noatime,x-systemd.growfs 0 1
+		PARTLABEL="${ROOT_PARTLABEL}" / ext4 defaults,noatime,x-systemd.growfs 0 1
 		# attention: the way systemd wants it, in /boot; I'd rather have it in /boot/efi cos I'm ancient
 		PARTLABEL="esp" /boot vfat defaults 0 2 
 	EOD
