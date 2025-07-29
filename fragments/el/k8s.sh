@@ -34,3 +34,10 @@ function mkosi_script_postinst_chroot::selinux_permissive() {
 		log warn "Cant make SELINUX permissive sans /etc/selinux/config"
 	fi
 }
+
+function mkosi_script_postinst_chroot::505_el_k8s_kernel_modules_load() {
+	log info "Set up load of module br_netfilter ..."
+	cat <<- EOF > /etc/modules-load.d/k8s.conf
+		br_netfilter
+	EOF
+}

@@ -29,7 +29,7 @@ function mkosi_script_postinst_chroot::502_k8s_install() {
 	apt-mark hold kubeadm kubelet kubectl
 }
 
-function mkosi_script_postinst_chroot::505_k8s_config() {
+function mkosi_script_postinst_chroot::505_apt_k8s_config() {
 	### k8s-related settings
 	# @TODO: dubious and probably better left to cloud-init to decide, but generally needed for a bare capi demo
 
