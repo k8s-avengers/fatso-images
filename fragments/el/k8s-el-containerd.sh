@@ -19,33 +19,10 @@ function mkosi_script_pre_mkosi_host::el_containerd_download() {
 	download_one_github_release_file_meta "containerd" "containerd"
 }
 
-function mkosi_script_postinst_chroot::400_k8s_el_containerd_install() {
-	log warn "Containerd VERSION!"
+function mkosi_script_postinst_chroot::400_k8s_el_containerd_check_version() {
+	log warn "Printing containerd version..."
 	# Check by running it under chroot
 	containerd --version
-
-	# Configure containerd to use systemd cgroup driver
-	mkdir -p /etc/containerd
-	containerd config default > /etc/containerd/config.toml
-
-	# Keep a copy of the original config
-	cp -v /etc/containerd/config.toml /etc/containerd/config.toml.orig
-
-	# Manipulating .toml in bash is even worse than YAML. This should NOT be done here.
-	if grep -q SystemdCgroup /etc/containerd/config.toml; then
-		# If it's already there make sure it's on
-		sed -i -e 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
-	else
-		# Terrible hack to add SystemdCgroup.
-		sed -i -e 's/runtimes.runc.options]/runtimes.runc.options]\n            SystemdCgroup = true/' /etc/containerd/config.toml
-	fi
-
-	# # Show the differences between the new config and the copy
-	# log info "Differences in containerd's config.toml after SystemdCgroup configuration..."
-	# diff -u /etc/containerd/config.toml.orig /etc/containerd/config.toml > toml.diff || true
-	# batcat --paging=never --force-colorization --wrap auto --terminal-width 80 --theme=Dracula --language=diff --file-name "containerd config.toml diff after systemd config" toml.diff
-	# cat toml.diff
-	# rm -f toml.diff
 
 	echo "Config cri-tools to use containerd..."
 	cat <<- EOD > /etc/crictl.yaml
