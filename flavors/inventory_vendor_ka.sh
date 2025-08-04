@@ -16,16 +16,13 @@ function flavor_vendor_ka() {
 	FLAVOR_FRAGMENTS+=("serial_console") # Enable ttyS0 serial console
 
 	case "${FLAVOR_DISTRO_TYPE}" in
-		"apt") # Only deb-based distros have this
-			function config_mkosi_pre::ssh_import_id() {
-				log warn "Enabling ssh-import-id and a hardcoded SSH public key - DO NOT use in production"
-				mkosi_config_add_rootfs_packages "ssh-import-id" #"python3-launchpadlib"
-			}
+		"el")
+			log warn "@TODO test for ssh-import-id via Python 3 pip"
+			FLAVOR_FRAGMENTS+=("ka/el_ssh_keys")
+			;;
 
-			function mkosi_script_postinst_chroot::ssh_keys() {
-				log warn "Enabling ssh-import-id and a hardcoded SSH public key - DO NOT use in production"
-				ssh-import-id gh:rpardini
-			}
+		"apt")
+			FLAVOR_FRAGMENTS+=("ka/apt_ssh_keys")
 			;;
 	esac
 }
