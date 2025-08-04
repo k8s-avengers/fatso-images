@@ -121,11 +121,13 @@ declare -g -r CACHE_DIR_PKGS="cache/pkgs/${BUILDER_CACHE_PKGS_ID}"
 declare -g -r CACHE_DIR_INCREMENTAL="cache/incremental/${FLAVOR}"
 declare -g -r CACHE_DIR_WORKSPACE="cache/workspace/${FLAVOR}"
 declare -g -r CACHE_DIR_EXTRA="cache/extra/${FLAVOR}"
-mkdir -p "${CACHE_DIR_PKGS}" "${CACHE_DIR_INCREMENTAL}" "${CACHE_DIR_WORKSPACE}" "${CACHE_DIR_EXTRA}"
+declare -g -r CACHE_DIR_REMOTE_LOOKUPS="${SCRIPT_DIR}/cache/extra/remote-lookups"
+mkdir -p "${CACHE_DIR_PKGS}" "${CACHE_DIR_INCREMENTAL}" "${CACHE_DIR_WORKSPACE}" "${CACHE_DIR_EXTRA}" "${CACHE_DIR_REMOTE_LOOKUPS}"
 log debug "CACHE_DIR_PKGS=${CACHE_DIR_PKGS}"
 log debug "CACHE_DIR_INCREMENTAL=${CACHE_DIR_INCREMENTAL}"
 log debug "CACHE_DIR_WORKSPACE=${CACHE_DIR_WORKSPACE}"
 log debug "CACHE_DIR_EXTRA=${CACHE_DIR_EXTRA}"
+log debug "CACHE_DIR_REMOTE_LOOKUPS=${CACHE_DIR_REMOTE_LOOKUPS}"
 
 ####################################################################################################################################################################################
 # Version calc, for GHA's benefit

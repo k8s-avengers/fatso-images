@@ -77,6 +77,37 @@ function find_one_github_release_file() {
 
 	declare github_release_api_url="https://api.github.com/repos/${github_org_repo}/releases/${github_tag}"
 
+	declare cache_key_inputs="undetermined" cache_key_sha1="undetermined"
+	cache_key_inputs="${github_release_api_url}"
+	cache_key_sha1="$(echo -n "${cache_key_inputs}" | sha1sum | cut -d ' ' -f 1)"
+
+	log debug "Cache key for GitHub lookup: '${cache_key_sha1}'"
+
+	declare cache_dir="${CACHE_DIR_REMOTE_LOOKUPS}"
+	declare cache_file="${cache_dir}/github_releases_${cache_key_sha1}.json"
+	log debug "Cache file for GitHub lookup: '${cache_file}'"
+
+	# if cache file exists, and is not expired, use it
+	declare cache_pending=no
+	declare cache_miss=yes
+	if [[ -f "${cache_file}" ]]; then
+		log info "Using CACHED GitHub release file meta: ${cache_file}"
+		if [[ "$(find "${cache_file}" -mmin +30)" ]]; then # check if the cache file is older than 30 minutes
+			log info "GitHub release file meta cache is older than 30 minutes, will refresh it: ${cache_file}"
+		else
+			log info "GitHub release file meta cache is fresh, using it: ${cache_file}"
+			cache_miss=no
+		fi
+	fi
+
+	if [[ "${cache_miss}" == "yes" ]]; then
+		# produce the cache file by running curl
+		log info "GitHub CACHE MISS for release file meta: ${cache_file}"
+		curl -sL "${github_release_api_url}" > "${cache_file}.tmp"
+		log debug "GitHub release file meta cached: ${cache_file}.tmp"
+		cache_pending=yes
+	fi
+
 	function find_one_github_release_file_meta_filter_out() {
 		cat # no filter
 	}
@@ -103,6 +134,23 @@ function find_one_github_release_file() {
 			cut -d '"' -f 4
 	)"
 	github_release_fn="${github_release_dl_url##*/}"
+
+	# Check if it's empty, if so, bomb
+	if [[ -z "${github_release_fn}" || "${github_release_fn}" =~ ^[[:space:]]*$ ]]; then
+		log error "No GitHub release file found for '${github_release_file_prefix}' in '${github_org_repo}' at tag '${github_tag}'"
+		log error "Or, maybe the filters are too strict?"
+		log error "Or, maybe GitHub rate limit is hit?"
+		log error "Or, maybe the result would be on a second page?"
+		exit 1
+	fi
+
+	# Confirm the cache after checking, if pending
+	if [[ "${cache_pending}" == "yes" ]]; then
+		mv -v "${cache_file}.tmp" "${cache_file}"
+		log info "Cache file confirmed: ${cache_file}"
+	fi
+
+	return 0
 }
 
 function find_one_github_release_file_meta() {
