@@ -33,6 +33,7 @@ function mkosi_script_postinst_chroot::400_k8s_el_containerd_check_version() {
 function mkosi_script_postinst_chroot::990_late_validate_el-containerd_config_and_pretty_print() {
 	# Lets make sure the changes produce valid containerd toml, and use containerd itself to reformat it
 	log info "Testing containerd config.toml for validity..."
+	mkdir -p /etc/containerd
 	containerd config dump > /etc/containerd/config.toml.validated
 	log info "containerd config.toml valid."
 	mv -v /etc/containerd/config.toml.validated /etc/containerd/config.toml
