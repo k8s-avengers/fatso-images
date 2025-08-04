@@ -13,7 +13,11 @@ function flavor_vendor_ka() {
 		MKOSI_CONTENT_ENVIRONMENT["IMAGE_FLAVOR_VERSION_ID"]="${FLAVOR}_${OS_ARCH}"
 	}
 
-	FLAVOR_FRAGMENTS+=("serial_console") # Enable ttyS0 serial console
+	# only for non-baremetal targets; although hyper-v doesn't have a serial console either...
+	if [[ "${TARGET_FLAVOR}" != "baremetal" ]]; then
+		log warn "TARGET_FLAVOR at vendor: ${TARGET_FLAVOR} - enabling serial_console"
+		FLAVOR_FRAGMENTS+=("serial_console") # Enable ttyS0 serial console
+	fi
 
 	case "${FLAVOR_DISTRO_TYPE}" in
 		"el")
