@@ -54,6 +54,21 @@ function flavor_base_rocky-noncloud-k8s-el-containerd() {
 	)
 }
 # ---------------------------------------------------------------------------------------------------------------------------------
+# cloud k8s, but with nvidia drivers.
+function flavor_base_rocky-noncloud-k8s-el-containerd-nvidia() {
+	declare -g EL_KERNEL_NVIDIA_NONFREE=yes      # Include nvidia-nonfree kernel modules
+	declare -g EL_KERNEL_NVIDIA_OPEN=no          # Include nvidia open source kernel modules
+	flavor_base_rocky-noncloud-k8s-el-containerd # inherit from ubuntu-cloud-k8s
+	# this only makes sense for baremetal targets, warn if not
+	if [[ "${TARGET_FLAVOR}" != "baremetal" ]]; then
+		log warn "Warning: rocky-noncloud-k8s-el-containerd-nvidia only makes sense for baremetal targets."
+	fi
+	FLAVOR_FRAGMENTS+=(
+		"el/nvidia"
+		#"el/nvidia-container" # TODO: implement; same repo
+	)
+}
+# ---------------------------------------------------------------------------------------------------------------------------------
 function flavor_base_rocky-cloud-workstation() {
 	flavor_base_rocky-cloud
 	FLAVOR_FRAGMENTS+=(
