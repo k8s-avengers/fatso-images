@@ -50,6 +50,7 @@ function flavor_base_rocky-noncloud-k8s-el-containerd() {
 		"el/k8s-el-containerd"
 		"el/k8s"
 		"el/k8s-sysctls"
+		"el/repos-enabled" # ship the image with all repos enabled (/etc/yum.repos.d)
 	)
 }
 # ---------------------------------------------------------------------------------------------------------------------------------
