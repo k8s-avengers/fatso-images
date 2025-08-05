@@ -11,6 +11,7 @@ function config_mkosi_pre::el_9_base_pkgs() {
 		tree
 		curl
 		wget
+		tar
 		bash
 		bash-completion
 		xfsprogs
