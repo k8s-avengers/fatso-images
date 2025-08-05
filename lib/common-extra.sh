@@ -90,6 +90,7 @@ function find_one_github_release_file() {
 	# if cache file exists, and is not expired, use it
 	declare cache_pending=no
 	declare cache_miss=yes
+	declare cache_file_effective="${cache_file}"
 	if [[ -f "${cache_file}" ]]; then
 		log info "Using CACHED GitHub release file meta: ${cache_file}"
 		if [[ "$(find "${cache_file}" -mmin +30)" ]]; then # check if the cache file is older than 30 minutes
@@ -106,6 +107,7 @@ function find_one_github_release_file() {
 		curl -sL "${github_release_api_url}" > "${cache_file}.tmp"
 		log debug "GitHub release file meta cached: ${cache_file}.tmp"
 		cache_pending=yes
+		cache_file_effective="${cache_file}.tmp"
 	fi
 
 	function find_one_github_release_file_meta_filter_out() {
@@ -127,7 +129,7 @@ function find_one_github_release_file() {
 	log info "GitHub releases URL: ${github_release_api_url}"
 
 	github_release_dl_url="$(
-		curl -sL "${github_release_api_url}" | jq . | grep "browser_download_url" |
+		cat "${cache_file_effective}" | jq . | grep "browser_download_url" |
 			grep "/${github_release_file_prefix}" |
 			find_one_github_release_file_meta_filter_out |
 			find_one_github_release_file_meta_filter_in |
