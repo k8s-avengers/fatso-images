@@ -49,11 +49,11 @@ function config_mkosi_pre::el_kernel_lts_pkgs() {
 	fi
 
 	if [[ "${EL_KERNEL_NVIDIA_NONFREE}" == "yes" ]]; then
-		mkosi_config_add_rootfs_packages "nvidia-nonfree"
+		mkosi_config_add_rootfs_packages "nvidia-nonfree-el-lts-modules"
 	fi
 
 	if [[ "${EL_KERNEL_NVIDIA_OPEN}" == "yes" ]]; then
-		mkosi_config_add_rootfs_packages "nvidia-open"
+		mkosi_config_add_rootfs_packages "nvidia-open-el-lts-modules"
 	fi
 
 	return 0
