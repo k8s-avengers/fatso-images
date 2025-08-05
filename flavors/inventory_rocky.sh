@@ -65,7 +65,7 @@ function flavor_base_rocky-noncloud-k8s-el-containerd-nvidia() {
 	fi
 	FLAVOR_FRAGMENTS+=(
 		"el/nvidia"
-		#"el/nvidia-container" # TODO: implement; same repo
+		"el/nvidia-container"
 	)
 }
 # ---------------------------------------------------------------------------------------------------------------------------------
